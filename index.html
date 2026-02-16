@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOP SEAL | Categories</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <p class="brand-tag">Trusted Industrial Supply Partner</p>
+      <h1 id="brand-name">TOP SEAL</h1>
+      <p class="intro">Choose a main category to explore products.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="home-slider-wrap" class="slider-wrap hidden">
+      <div class="slider" id="home-slider"></div>
+    </section>
+
+    <section>
+      <h2>Main Categories</h2>
+      <p class="section-note">Select a category to continue.</p>
+      <nav class="mother-category-list" aria-label="Main product categories" id="main-category-nav"></nav>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <section>
+        <h2 class="footer-title">Sub-Categories</h2>
+        <p class="footer-text footer-links-inline" id="footer-subcategories"></p>
+      </section>
+      <section>
+        <h2 class="footer-title">Contact</h2>
+        <p class="footer-text" id="footer-brand">TOP SEAL</p>
+        <p class="footer-text"><a class="footer-link" id="footer-whatsapp" href="#" target="_blank" rel="noopener noreferrer">WhatsApp Chat</a></p>
+      </section>
+    </div>
+  </footer>
+
+  <script src="shop-data.js"></script>
+  <script>
+    const data = loadTopSealData();
+    const brandName = data.settings?.brandName || "TOP SEAL";
+    const whatsapp = data.settings?.whatsappNumber || "8801894527991";
+
+    document.getElementById("brand-name").textContent = brandName;
+    document.getElementById("footer-brand").textContent = brandName;
+    document.getElementById("footer-whatsapp").href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello ${brandName}`)}`;
+
+    const nav = document.getElementById("main-category-nav");
+    data.categories.forEach((cat) => {
+      const a = document.createElement("a");
+      a.className = "mother-category-item";
+      a.href = `category.html?cat=${cat.slug}`;
+      a.textContent = cat.label;
+      nav.appendChild(a);
+    });
+
+    const footerSub = document.getElementById("footer-subcategories");
+    const subLinks = [];
+    data.categories.forEach((cat) => {
+      cat.subcategories.forEach((sub) => {
+        const a = document.createElement("a");
+        a.className = "footer-link";
+        a.href = `category.html?cat=${cat.slug}&sub=${sub.slug}`;
+        a.textContent = sub.label;
+        subLinks.push(a);
+      });
+    });
+    subLinks.forEach((a, idx) => {
+      footerSub.appendChild(a);
+      if (idx < subLinks.length - 1) footerSub.append(", ");
+    });
+
+    function setupSlider(images, containerId, wrapId) {
+      if (!images || !images.length) return;
+      const wrap = document.getElementById(wrapId);
+      const slider = document.getElementById(containerId);
+      wrap.classList.remove("hidden");
+
+      let index = 0;
+      const img = document.createElement("img");
+      img.className = "slide-image";
+      img.src = images[index];
+      img.alt = "Slideshow image";
+      slider.appendChild(img);
+
+      setInterval(() => {
+        index = (index + 1) % images.length;
+        img.src = images[index];
+      }, 3000);
+    }
+
+    setupSlider(data.homeSlides || [], "home-slider", "home-slider-wrap");
+  </script>
+</body>
+</html>
