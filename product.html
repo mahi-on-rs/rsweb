@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOP SEAL | Product Details</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header compact">
+    <div class="container">
+      <p class="brand-tag" id="brand-tag">TOP SEAL</p>
+      <h1>Product Checkout</h1>
+      <a class="back-link" href="index.html">&larr; Back to categories</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="product-checkout" id="product-detail">
+      <div id="product-image-wrap"></div>
+      <div>
+        <h2 id="product-name">Loading product...</h2>
+        <p id="product-price" class="checkout-price"></p>
+        <p id="product-stock" class="checkout-stock"></p>
+        <p id="product-category"></p>
+        <p id="product-description"></p>
+        <ul id="product-features"></ul>
+        <a class="buy-button checkout-buy" id="buy-button" href="#">Order via WhatsApp</a>
+        <p class="small-note">A product card message will be ready in WhatsApp.</p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <section>
+        <h2 class="footer-title">Sub-Categories</h2>
+        <p class="footer-text footer-links-inline" id="footer-subcategories"></p>
+      </section>
+      <section>
+        <h2 class="footer-title">Contact</h2>
+        <p class="footer-text" id="footer-brand">TOP SEAL</p>
+        <p class="footer-text"><a class="footer-link" id="footer-whatsapp" href="#" target="_blank" rel="noopener noreferrer">WhatsApp Chat</a></p>
+      </section>
+    </div>
+  </footer>
+
+  <script src="shop-data.js"></script>
+  <script>
+    (async () => {
+    const data = await loadTopSealData();
+    const params = new URLSearchParams(window.location.search);
+    const itemKey = params.get("item");
+    const item = data.products.find((product) => product.slug === itemKey);
+
+    const brandName = data.settings?.brandName || "TOP SEAL";
+    const whatsapp = data.settings?.whatsappNumber || "8801894527991";
+
+    document.getElementById("brand-tag").textContent = brandName;
+    document.getElementById("footer-brand").textContent = brandName;
+    document.getElementById("footer-whatsapp").href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello ${brandName}`)}`;
+
+    const footerSub = document.getElementById("footer-subcategories");
+    const subLinks = [];
+    data.categories.forEach((cat) => cat.subcategories.forEach((sub) => {
+      const a = document.createElement("a");
+      a.className = "footer-link";
+      a.href = `category.html?cat=${cat.slug}&sub=${sub.slug}`;
+      a.textContent = sub.label;
+      subLinks.push(a);
+    }));
+    subLinks.forEach((a, idx) => {
+      footerSub.appendChild(a);
+      if (idx < subLinks.length - 1) footerSub.append(", ");
+    });
+
+    const productName = document.getElementById("product-name");
+    const productPrice = document.getElementById("product-price");
+    const productStock = document.getElementById("product-stock");
+    const productCategory = document.getElementById("product-category");
+    const productDescription = document.getElementById("product-description");
+    const productFeatures = document.getElementById("product-features");
+    const productImageWrap = document.getElementById("product-image-wrap");
+    const buyButton = document.getElementById("buy-button");
+
+    if (!item) {
+      productName.textContent = "Product not found";
+      productCategory.textContent = "Please return to categories and pick a product.";
+      productDescription.textContent = "";
+      buyButton.style.display = "none";
+    } else {
+      const category = data.categories.find((cat) => cat.id === item.categoryId);
+      productName.textContent = item.name;
+      productPrice.textContent = `Price: ৳ ${item.price || "Ask Price"}`;
+      productStock.textContent = `Stock: ${item.stock || "In Stock"}`;
+      productCategory.textContent = `Category: ${category?.label || "Unknown"}`;
+      productDescription.textContent = item.description;
+      productFeatures.innerHTML = "";
+
+      if (item.imageData) {
+        productImageWrap.innerHTML = `<img class="checkout-image" src="${item.imageData}" alt="${item.name}" />`;
+      } else {
+        productImageWrap.innerHTML = `<div class="checkout-image-placeholder">No Image</div>`;
+      }
+
+      (item.features || []).forEach((feature) => {
+        const li = document.createElement("li");
+        li.textContent = feature;
+        productFeatures.appendChild(li);
+      });
+
+      const productLink = window.location.href;
+      const messageCard = `🧾 Product Order\n--------------------\nBrand: ${brandName}\nProduct: ${item.name}\nPrice: ৳ ${item.price || "Ask Price"}\nStock: ${item.stock || "In Stock"}\nCategory: ${category?.label || "Unknown"}\nLink: ${productLink}\n--------------------\nPlease confirm availability.`;
+
+      buyButton.href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(messageCard)}`;
+      buyButton.target = "_blank";
+      buyButton.rel = "noopener noreferrer";
+    }
+    })();
+  </script>
+</body>
+</html>

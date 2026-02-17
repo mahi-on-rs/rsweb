@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOP SEAL | Category</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header compact">
+    <div class="container">
+      <p class="brand-tag" id="brand-tag">TOP SEAL</p>
+      <h1 id="category-title">Category</h1>
+      <a class="back-link" href="index.html">&larr; Back to main categories</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="category-slider-wrap" class="slider-wrap hidden">
+      <div class="slider" id="category-slider"></div>
+    </section>
+
+    <section class="category-page-block">
+      <h2>Sub-Categories</h2>
+      <div id="subcategory-list" class="subcategory-list"></div>
+
+      <h2 id="products-title">Products</h2>
+      <div id="products-list" class="products-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <section>
+        <h2 class="footer-title">Sub-Categories</h2>
+        <p class="footer-text footer-links-inline" id="footer-subcategories"></p>
+      </section>
+      <section>
+        <h2 class="footer-title">Contact</h2>
+        <p class="footer-text" id="footer-brand">TOP SEAL</p>
+        <p class="footer-text"><a class="footer-link" id="footer-whatsapp" href="#" target="_blank" rel="noopener noreferrer">WhatsApp Chat</a></p>
+      </section>
+    </div>
+  </footer>
+
+  <script src="shop-data.js"></script>
+  <script>
+    (async () => {
+    const data = await loadTopSealData();
+    const params = new URLSearchParams(window.location.search);
+    const catSlug = params.get("cat");
+    const selectedSubSlugFromUrl = params.get("sub");
+
+    const brandName = data.settings?.brandName || "TOP SEAL";
+    const whatsapp = data.settings?.whatsappNumber || "8801894527991";
+    document.getElementById("brand-tag").textContent = brandName;
+    document.getElementById("footer-brand").textContent = brandName;
+    document.getElementById("footer-whatsapp").href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello ${brandName}`)}`;
+
+    const footerSub = document.getElementById("footer-subcategories");
+    const subLinks = [];
+    data.categories.forEach((cat) => cat.subcategories.forEach((sub) => {
+      const a = document.createElement("a");
+      a.className = "footer-link";
+      a.href = `category.html?cat=${cat.slug}&sub=${sub.slug}`;
+      a.textContent = sub.label;
+      subLinks.push(a);
+    }));
+    subLinks.forEach((a, idx) => {
+      footerSub.appendChild(a);
+      if (idx < subLinks.length - 1) footerSub.append(", ");
+    });
+
+    const category = data.categories.find((cat) => cat.slug === catSlug);
+
+    const title = document.getElementById("category-title");
+    const subcategoryList = document.getElementById("subcategory-list");
+    const productsTitle = document.getElementById("products-title");
+    const productsList = document.getElementById("products-list");
+
+    function setupCategorySlider(images) {
+      if (!images || !images.length) return;
+      const wrap = document.getElementById("category-slider-wrap");
+      const slider = document.getElementById("category-slider");
+      wrap.classList.remove("hidden");
+
+      let index = 0;
+      const img = document.createElement("img");
+      img.className = "slide-image";
+      img.src = images[index];
+      img.alt = "Category slideshow";
+      slider.appendChild(img);
+
+      setInterval(() => {
+        index = (index + 1) % images.length;
+        img.src = images[index];
+      }, 3000);
+    }
+
+    function renderProducts(subSlug) {
+      const sub = category.subcategories.find((item) => item.slug === subSlug);
+      productsTitle.textContent = `${sub.label} Products`;
+      productsList.innerHTML = "";
+
+      const products = data.products.filter((product) => product.subcategoryId === sub.id);
+      if (!products.length) {
+        productsList.innerHTML = "<p>No products available in this sub-category.</p>";
+        return;
+      }
+
+      products.forEach((product) => {
+        const card = document.createElement("article");
+        card.className = "product-card";
+
+        const image = product.imageData
+          ? `<img src="${product.imageData}" alt="${product.name}" class="product-card-image" />`
+          : `<div class="product-card-placeholder">No Image</div>`;
+
+        card.innerHTML = `
+          ${image}
+          <h3>${product.name}</h3>
+          <p class="product-card-price">৳ ${product.price || "Ask Price"}</p>
+          <a class="order-button" href="product.html?item=${product.slug}">Order</a>
+        `;
+
+        productsList.appendChild(card);
+      });
+    }
+
+    if (!category) {
+      title.textContent = "Category not found";
+      subcategoryList.innerHTML = "<p>Please return and choose a valid category.</p>";
+      productsTitle.textContent = "";
+    } else {
+      title.textContent = category.label;
+      setupCategorySlider(data.homeSlides || []);
+
+      const subSlugs = category.subcategories.map((sub) => sub.slug);
+      const initialSubSlug = subSlugs.includes(selectedSubSlugFromUrl) ? selectedSubSlugFromUrl : subSlugs[0];
+
+      category.subcategories.forEach((sub) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = sub.label;
+        button.className = "subcategory-btn";
+
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".subcategory-btn").forEach((btn) => btn.classList.remove("active"));
+          button.classList.add("active");
+          renderProducts(sub.slug);
+
+          const nextParams = new URLSearchParams(window.location.search);
+          nextParams.set("sub", sub.slug);
+          history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
+        });
+
+        if (sub.slug === initialSubSlug) {
+          button.classList.add("active");
+          renderProducts(sub.slug);
+        }
+
+        subcategoryList.appendChild(button);
+      });
+    }
+    })();
+  </script>
+</body>
+</html>
