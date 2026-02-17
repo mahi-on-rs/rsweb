@@ -14,7 +14,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === "production";
 const JWT_SECRET = process.env.JWT_SECRET || "change_me";
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
+const ADMIN_USERNAME = (process.env.ADMIN_USERNAME || "admin").trim();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "topseal123";
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -72,10 +72,16 @@ async function initDb() {
     );
   `);
 
-  const existingAdmin = await pool.query("SELECT id FROM admins WHERE username = $1", [ADMIN_USERNAME]);
+  const existingAdmin = await pool.query("SELECT id, password_hash FROM admins WHERE username = $1", [ADMIN_USERNAME]);
   if (!existingAdmin.rowCount) {
     const hash = await bcrypt.hash(ADMIN_PASSWORD, 10);
     await pool.query("INSERT INTO admins(username, password_hash) VALUES($1, $2)", [ADMIN_USERNAME, hash]);
+  } else {
+    const matchesConfiguredPassword = await bcrypt.compare(ADMIN_PASSWORD, existingAdmin.rows[0].password_hash);
+    if (!matchesConfiguredPassword) {
+      const hash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+      await pool.query("UPDATE admins SET password_hash = $1 WHERE id = $2", [hash, existingAdmin.rows[0].id]);
+    }
   }
 
   const existingState = await pool.query("SELECT id FROM app_state WHERE id = 1");
