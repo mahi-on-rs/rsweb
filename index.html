@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOP SEAL | Categories</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="top-nav" id="top-nav">
+    <div class="container top-nav-inner">
+      <a class="top-nav-brand" href="index.html">TOP SEAL</a>
+      <button class="top-nav-toggle" id="top-nav-toggle" type="button" aria-expanded="false" aria-controls="top-nav-links">Menu</button>
+      <nav class="top-nav-links" id="top-nav-links" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="#main-category-nav">Categories</a>
+        <a href="#footer-whatsapp">Contact</a>
+      </nav>
+    </div>
+  </div>
+  <header class="site-header" id="hero-header">
+    <div class="container">
+      <p class="brand-tag" id="hero-eyebrow">Trusted Industrial Supply Partner</p>
+      <h1 id="hero-title">TOP SEAL</h1>
+      <p class="intro" id="hero-subtitle">Choose a main category to explore products.</p>
+      <div class="hero-actions">
+        <a id="hero-primary-cta" class="hero-btn primary" href="#main-category-nav">Browse Categories</a>
+        <a id="hero-secondary-cta" class="hero-btn ghost" href="#" target="_blank" rel="noopener noreferrer">Order on WhatsApp</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="home-slider-wrap" class="slider-wrap hidden">
+      <div class="slider" id="home-slider"></div>
+    </section>
+
+    <section>
+      <h2>Main Categories</h2>
+      <p class="section-note">Select a category to continue.</p>
+      <nav class="mother-category-list" aria-label="Main product categories" id="main-category-nav"></nav>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <section>
+        <h2 class="footer-title">Sub-Categories</h2>
+        <p class="footer-text footer-links-inline" id="footer-subcategories"></p>
+      </section>
+      <section>
+        <h2 class="footer-title">Contact</h2>
+        <p class="footer-text" id="footer-brand">TOP SEAL</p>
+        <p class="footer-text"><a class="footer-link" id="footer-whatsapp" href="#" target="_blank" rel="noopener noreferrer">WhatsApp Chat</a></p>
+        <p class="footer-text" id="footer-address"></p>
+        <p class="footer-text"><a class="footer-link" id="footer-map-link" href="#" target="_blank" rel="noopener noreferrer">View on Map</a></p>
+      </section>
+      <section>
+        <h2 class="footer-title">Business Hours</h2>
+        <ul class="footer-hours" id="footer-hours"></ul>
+      </section>
+      <section>
+        <h2 class="footer-title">Follow Us</h2>
+        <div class="footer-social" id="footer-social"></div>
+      </section>
+    </div>
+  </footer>
+
+  <script src="shop-data.js"></script>
+  <script>
+    (async () => {
+    const data = await loadTopSealData();
+    applyStoreTheme(data.settings || {});
+    const brandName = data.settings?.brandName || "TOP SEAL";
+    const whatsapp = data.settings?.whatsappNumber || "8801894527991";
+    const heroEyebrow = data.settings?.heroEyebrow || "Trusted Industrial Supply Partner";
+    const heroTitle = data.settings?.heroTitle || brandName;
+    const heroSubtitle = data.settings?.heroSubtitle || "Choose a main category to explore products.";
+    const heroPrimaryCtaLabel = data.settings?.heroPrimaryCtaLabel || "Browse Categories";
+    const heroSecondaryCtaLabel = data.settings?.heroSecondaryCtaLabel || "Order on WhatsApp";
+
+    document.getElementById("hero-eyebrow").textContent = heroEyebrow;
+    document.getElementById("hero-title").textContent = heroTitle;
+    document.getElementById("hero-subtitle").textContent = heroSubtitle;
+    document.getElementById("hero-primary-cta").textContent = heroPrimaryCtaLabel;
+    document.getElementById("hero-secondary-cta").textContent = heroSecondaryCtaLabel;
+    document.getElementById("footer-brand").textContent = brandName;
+    document.getElementById("footer-whatsapp").href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello ${brandName}`)}`;
+    document.getElementById("hero-secondary-cta").href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello ${brandName}`)}`;
+    document.getElementById("footer-address").textContent = data.settings?.contactAddress || "";
+
+    const mapLinkEl = document.getElementById("footer-map-link");
+    const mapLink = data.settings?.mapLink || "";
+    if (mapLink) {
+      mapLinkEl.href = mapLink;
+      mapLinkEl.classList.remove("hidden");
+    } else {
+      mapLinkEl.classList.add("hidden");
+    }
+
+    const hoursList = document.getElementById("footer-hours");
+    const hours = (data.settings?.businessHours || "").split("\n").map((line) => line.trim()).filter(Boolean);
+    hoursList.innerHTML = "";
+    hours.forEach((line) => {
+      const li = document.createElement("li");
+      li.textContent = line;
+      hoursList.appendChild(li);
+    });
+
+    const socialContainer = document.getElementById("footer-social");
+    socialContainer.innerHTML = "";
+    [
+      { label: "Facebook", href: data.settings?.facebookUrl },
+      { label: "Instagram", href: data.settings?.instagramUrl },
+      { label: "YouTube", href: data.settings?.youtubeUrl }
+    ].filter((item) => item.href).forEach((item) => {
+      const a = document.createElement("a");
+      a.className = "footer-link";
+      a.href = item.href;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = item.label;
+      socialContainer.appendChild(a);
+    });
+
+
+    const heroHeader = document.getElementById("hero-header");
+    const heroImage = data.settings?.heroBackgroundImage;
+    if (heroImage) {
+      heroHeader.style.setProperty("--hero-image", `url(${heroImage})`);
+      heroHeader.classList.add("has-image");
+    } else {
+      heroHeader.classList.remove("has-image");
+      heroHeader.style.removeProperty("--hero-image");
+    }
+
+    const nav = document.getElementById("main-category-nav");
+    data.categories.forEach((cat) => {
+      const a = document.createElement("a");
+      a.className = "mother-category-item";
+      a.href = `category.html?cat=${cat.slug}`;
+      a.textContent = cat.label;
+      nav.appendChild(a);
+    });
+
+    const footerSub = document.getElementById("footer-subcategories");
+    const subLinks = [];
+    data.categories.forEach((cat) => {
+      cat.subcategories.forEach((sub) => {
+        const a = document.createElement("a");
+        a.className = "footer-link";
+        a.href = `category.html?cat=${cat.slug}&sub=${sub.slug}`;
+        a.textContent = sub.label;
+        subLinks.push(a);
+      });
+    });
+    subLinks.forEach((a, idx) => {
+      footerSub.appendChild(a);
+      if (idx < subLinks.length - 1) footerSub.append(", ");
+    });
+
+    function setupSlider(images, containerId, wrapId) {
+      if (!images || !images.length) return;
+      const wrap = document.getElementById(wrapId);
+      const slider = document.getElementById(containerId);
+      wrap.classList.remove("hidden");
+      slider.innerHTML = "";
+
+      const intervalMs = Math.min(10000, Math.max(2000, Number(data.settings?.slideIntervalMs) || 3200));
+      let index = 0;
+
+      const img = document.createElement("img");
+      img.className = "slide-image";
+      img.alt = "Homepage slideshow image";
+      img.decoding = "async";
+      img.loading = "eager";
+      img.fetchPriority = "high";
+
+      function applyResponsiveSlideImage(imageSrc) {
+        const v = buildImageVariantSet(imageSrc);
+        img.src = v.large;
+        img.srcset = `${v.small} 420w, ${v.medium} 820w, ${v.large} 1280w`;
+        img.sizes = "(max-width: 700px) 100vw, 94vw";
+      }
+
+      applyResponsiveSlideImage(images[index]);
+      slider.appendChild(img);
+
+      const dots = document.createElement("div");
+      dots.className = "slider-dots";
+      images.forEach((_, i) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "slider-dot" + (i === 0 ? " active" : "");
+        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+        dot.addEventListener("click", () => setSlide(i, true));
+        dots.appendChild(dot);
+      });
+      slider.appendChild(dots);
+
+      function setSlide(nextIndex, animate = false) {
+        index = (nextIndex + images.length) % images.length;
+        if (animate) {
+          img.classList.add("is-fading");
+          setTimeout(() => img.classList.remove("is-fading"), 280);
+        }
+        applyResponsiveSlideImage(images[index]);
+        dots.querySelectorAll(".slider-dot").forEach((dot, i) => dot.classList.toggle("active", i === index));
+      }
+
+      setInterval(() => setSlide(index + 1, true), intervalMs);
+    }
+
+    setupSlider(data.homeSlides || [], "home-slider", "home-slider-wrap");
+
+    const navToggle = document.getElementById("top-nav-toggle");
+    const topNav = document.getElementById("top-nav");
+    const navLinks = document.getElementById("top-nav-links");
+    navToggle?.addEventListener("click", () => {
+      const expanded = navToggle.getAttribute("aria-expanded") === "true";
+      navToggle.setAttribute("aria-expanded", String(!expanded));
+      topNav.classList.toggle("open", !expanded);
+    });
+    navLinks?.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        navToggle?.setAttribute("aria-expanded", "false");
+        topNav.classList.remove("open");
+      });
+    });
+    })();
+  </script>
+</body>
+</html>

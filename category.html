@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOP SEAL | Category</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="top-nav" id="top-nav">
+    <div class="container top-nav-inner">
+      <a class="top-nav-brand" href="index.html">TOP SEAL</a>
+      <button class="top-nav-toggle" id="top-nav-toggle" type="button" aria-expanded="false" aria-controls="top-nav-links">Menu</button>
+      <nav class="top-nav-links" id="top-nav-links" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="#subcategory-list">Sub-Categories</a>
+        <a href="#footer-whatsapp">Contact</a>
+      </nav>
+    </div>
+  </div>
+  <header class="site-header compact">
+    <div class="container">
+      <p class="brand-tag" id="brand-tag">TOP SEAL</p>
+      <h1 id="category-title">Category</h1>
+      <a class="back-link" href="index.html">&larr; Back to main categories</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="category-slider-wrap" class="slider-wrap hidden">
+      <div class="slider" id="category-slider"></div>
+    </section>
+
+    <section class="category-page-block">
+      <h2>Sub-Categories</h2>
+      <div id="subcategory-list" class="subcategory-list"></div>
+
+      <h2 id="products-title">Products</h2>
+      <div id="products-list" class="products-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <section>
+        <h2 class="footer-title">Sub-Categories</h2>
+        <p class="footer-text footer-links-inline" id="footer-subcategories"></p>
+      </section>
+      <section>
+        <h2 class="footer-title">Contact</h2>
+        <p class="footer-text" id="footer-brand">TOP SEAL</p>
+        <p class="footer-text"><a class="footer-link" id="footer-whatsapp" href="#" target="_blank" rel="noopener noreferrer">WhatsApp Chat</a></p>
+        <p class="footer-text" id="footer-address"></p>
+        <p class="footer-text"><a class="footer-link" id="footer-map-link" href="#" target="_blank" rel="noopener noreferrer">View on Map</a></p>
+      </section>
+      <section>
+        <h2 class="footer-title">Business Hours</h2>
+        <ul class="footer-hours" id="footer-hours"></ul>
+      </section>
+      <section>
+        <h2 class="footer-title">Follow Us</h2>
+        <div class="footer-social" id="footer-social"></div>
+      </section>
+    </div>
+  </footer>
+
+  <script src="shop-data.js"></script>
+  <script>
+    (async () => {
+    const data = await loadTopSealData();
+    applyStoreTheme(data.settings || {});
+    const params = new URLSearchParams(window.location.search);
+    const catSlug = params.get("cat");
+    const selectedSubSlugFromUrl = params.get("sub");
+
+    const brandName = data.settings?.brandName || "TOP SEAL";
+    const whatsapp = data.settings?.whatsappNumber || "8801894527991";
+    document.getElementById("brand-tag").textContent = brandName;
+    document.getElementById("footer-brand").textContent = brandName;
+    document.getElementById("footer-whatsapp").href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello ${brandName}`)}`;
+    document.getElementById("footer-address").textContent = data.settings?.contactAddress || "";
+
+    const mapLinkEl = document.getElementById("footer-map-link");
+    const mapLink = data.settings?.mapLink || "";
+    if (mapLink) {
+      mapLinkEl.href = mapLink;
+      mapLinkEl.classList.remove("hidden");
+    } else {
+      mapLinkEl.classList.add("hidden");
+    }
+
+    const hoursList = document.getElementById("footer-hours");
+    const hours = (data.settings?.businessHours || "").split("\n").map((line) => line.trim()).filter(Boolean);
+    hoursList.innerHTML = "";
+    hours.forEach((line) => {
+      const li = document.createElement("li");
+      li.textContent = line;
+      hoursList.appendChild(li);
+    });
+
+    const socialContainer = document.getElementById("footer-social");
+    socialContainer.innerHTML = "";
+    [
+      { label: "Facebook", href: data.settings?.facebookUrl },
+      { label: "Instagram", href: data.settings?.instagramUrl },
+      { label: "YouTube", href: data.settings?.youtubeUrl }
+    ].filter((item) => item.href).forEach((item) => {
+      const a = document.createElement("a");
+      a.className = "footer-link";
+      a.href = item.href;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = item.label;
+      socialContainer.appendChild(a);
+    });
+
+    const footerSub = document.getElementById("footer-subcategories");
+    const subLinks = [];
+    data.categories.forEach((cat) => cat.subcategories.forEach((sub) => {
+      const a = document.createElement("a");
+      a.className = "footer-link";
+      a.href = `category.html?cat=${cat.slug}&sub=${sub.slug}`;
+      a.textContent = sub.label;
+      subLinks.push(a);
+    }));
+    subLinks.forEach((a, idx) => {
+      footerSub.appendChild(a);
+      if (idx < subLinks.length - 1) footerSub.append(", ");
+    });
+
+    const category = data.categories.find((cat) => cat.slug === catSlug);
+
+    const title = document.getElementById("category-title");
+    const subcategoryList = document.getElementById("subcategory-list");
+    const productsTitle = document.getElementById("products-title");
+    const productsList = document.getElementById("products-list");
+
+    function setupCategorySlider(images) {
+      if (!images || !images.length) return;
+      const wrap = document.getElementById("category-slider-wrap");
+      const slider = document.getElementById("category-slider");
+      wrap.classList.remove("hidden");
+      slider.innerHTML = "";
+
+      const intervalMs = Math.min(10000, Math.max(2000, Number(data.settings?.slideIntervalMs) || 3200));
+      let index = 0;
+
+      const img = document.createElement("img");
+      img.className = "slide-image";
+      img.alt = "Category slideshow image";
+      img.decoding = "async";
+      img.loading = "eager";
+
+      function applyResponsiveSlideImage(imageSrc) {
+        const v = buildImageVariantSet(imageSrc);
+        img.src = v.large;
+        img.srcset = `${v.small} 420w, ${v.medium} 820w, ${v.large} 1280w`;
+        img.sizes = "(max-width: 700px) 100vw, 94vw";
+      }
+
+      applyResponsiveSlideImage(images[index]);
+      slider.appendChild(img);
+
+      const dots = document.createElement("div");
+      dots.className = "slider-dots";
+      images.forEach((_, i) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "slider-dot" + (i === 0 ? " active" : "");
+        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+        dot.addEventListener("click", () => setSlide(i, true));
+        dots.appendChild(dot);
+      });
+      slider.appendChild(dots);
+
+      function setSlide(nextIndex, animate = false) {
+        index = (nextIndex + images.length) % images.length;
+        if (animate) {
+          img.classList.add("is-fading");
+          setTimeout(() => img.classList.remove("is-fading"), 280);
+        }
+        applyResponsiveSlideImage(images[index]);
+        dots.querySelectorAll(".slider-dot").forEach((dot, i) => dot.classList.toggle("active", i === index));
+      }
+
+      setInterval(() => setSlide(index + 1, true), intervalMs);
+    }
+
+
+    function buildBadges(product) {
+      const badgeMap = {
+        "new": "New",
+        "hot": "Hot",
+        "best-seller": "Best Seller"
+      };
+      const badges = (product.badges || []).map((key) => badgeMap[key]).filter(Boolean);
+      const stockText = (product.stock || "").toLowerCase();
+      if (stockText && !stockText.includes("out") && !stockText.includes("unavailable")) {
+        badges.push("In Stock");
+      }
+      if (!badges.length) return "";
+      return `<div class="product-badges">${badges.map((badge) => `<span class="product-badge">${badge}</span>`).join("")}</div>`;
+    }
+
+    function renderProducts(subSlug) {
+      const sub = category.subcategories.find((item) => item.slug === subSlug);
+      productsTitle.textContent = `${sub.label} Products`;
+      productsList.innerHTML = "";
+
+      const products = data.products.filter((product) => product.subcategoryId === sub.id);
+      if (!products.length) {
+        productsList.innerHTML = "<p>No products available in this sub-category.</p>";
+        return;
+      }
+
+      products.forEach((product) => {
+        const card = document.createElement("article");
+        card.className = "product-card";
+
+        const image = product.imageData
+          ? `<img src="${optimizeImageSource(product.imageData, { width: 520 })}" alt="${product.name}" class="product-card-image" loading="lazy" decoding="async" />`
+          : `<div class="product-card-placeholder">No Image</div>`;
+
+        card.innerHTML = `
+          ${image}
+          <h3>${product.name}</h3>
+          ${buildBadges(product)}
+          <p class="product-card-price">৳ ${product.price || "Ask Price"}</p>
+          <a class="order-button" href="product.html?item=${product.slug}">Order</a>
+        `;
+
+        productsList.appendChild(card);
+      });
+    }
+
+    if (!category) {
+      title.textContent = "Category not found";
+      subcategoryList.innerHTML = "<p>Please return and choose a valid category.</p>";
+      productsTitle.textContent = "";
+    } else {
+      title.textContent = category.label;
+      setupCategorySlider(data.homeSlides || []);
+
+      const subSlugs = category.subcategories.map((sub) => sub.slug);
+      const initialSubSlug = subSlugs.includes(selectedSubSlugFromUrl) ? selectedSubSlugFromUrl : subSlugs[0];
+
+      category.subcategories.forEach((sub) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = sub.label;
+        button.className = "subcategory-btn";
+
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".subcategory-btn").forEach((btn) => btn.classList.remove("active"));
+          button.classList.add("active");
+          renderProducts(sub.slug);
+
+          const nextParams = new URLSearchParams(window.location.search);
+          nextParams.set("sub", sub.slug);
+          history.replaceState(null, "", `${window.location.pathname}?${nextParams.toString()}`);
+        });
+
+        if (sub.slug === initialSubSlug) {
+          button.classList.add("active");
+          renderProducts(sub.slug);
+        }
+
+        subcategoryList.appendChild(button);
+      });
+    }
+
+    const navToggle = document.getElementById("top-nav-toggle");
+    const topNav = document.getElementById("top-nav");
+    const navLinks = document.getElementById("top-nav-links");
+    navToggle?.addEventListener("click", () => {
+      const expanded = navToggle.getAttribute("aria-expanded") === "true";
+      navToggle.setAttribute("aria-expanded", String(!expanded));
+      topNav.classList.toggle("open", !expanded);
+    });
+    navLinks?.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        navToggle?.setAttribute("aria-expanded", "false");
+        topNav.classList.remove("open");
+      });
+    });
+    })();
+  </script>
+</body>
+</html>

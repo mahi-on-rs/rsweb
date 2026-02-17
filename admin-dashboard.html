@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOP SEAL Admin Panel</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <header class="admin-header">
+    <div class="container row">
+      <div>
+        <h1>TOP SEAL Admin Panel</h1>
+        <p class="small">Manage settings, categories, sub-categories, and products.</p>
+      </div>
+      <div class="inline-actions">
+        <button id="logout-btn" class="secondary" type="button">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="admin-dashboard" class="container">
+    <section class="card">
+      <h2>Store Settings</h2>
+      <form id="settings-form" class="grid-2">
+        <div>
+          <label for="brand-name">Brand Name</label>
+          <input id="brand-name" required />
+        </div>
+        <div>
+          <label for="whatsapp-number">WhatsApp Number (international)</label>
+          <input id="whatsapp-number" required />
+        </div>
+        <div>
+          <label for="primary-color">Primary Theme Color</label>
+          <input id="primary-color" type="color" required />
+        </div>
+        <div>
+          <label for="secondary-color">Secondary Theme Color</label>
+          <input id="secondary-color" type="color" required />
+        </div>
+        <div>
+          <label for="background-color">Background Color</label>
+          <input id="background-color" type="color" required />
+        </div>
+        <div>
+          <label for="surface-color">Surface/Card Color</label>
+          <input id="surface-color" type="color" required />
+        </div>
+        <div>
+          <label for="text-color">Primary Text Color</label>
+          <input id="text-color" type="color" required />
+        </div>
+        <div>
+          <label for="slide-interval">Slider Interval (seconds)</label>
+          <input id="slide-interval" type="number" min="2" max="10" step="0.1" />
+        </div>
+        <div>
+          <label for="business-hours">Business Hours (one line per entry)</label>
+          <textarea id="business-hours" placeholder="Saturday - Thursday: 9:00 AM - 8:00 PM&#10;Friday: Limited Support"></textarea>
+        </div>
+        <div>
+          <label for="contact-address">Store Address</label>
+          <input id="contact-address" placeholder="Dhaka, Bangladesh" />
+        </div>
+        <div>
+          <label for="map-link">Google Map Link</label>
+          <input id="map-link" placeholder="https://maps.google.com/..." />
+        </div>
+        <div>
+          <label for="facebook-url">Facebook URL</label>
+          <input id="facebook-url" placeholder="https://facebook.com/yourpage" />
+        </div>
+        <div>
+          <label for="instagram-url">Instagram URL</label>
+          <input id="instagram-url" placeholder="https://instagram.com/yourpage" />
+        </div>
+        <div>
+          <label for="youtube-url">YouTube URL</label>
+          <input id="youtube-url" placeholder="https://youtube.com/@yourchannel" />
+        </div>
+        <div>
+          <label for="hero-eyebrow">Hero Eyebrow</label>
+          <input id="hero-eyebrow" placeholder="Trusted Industrial Supply Partner" />
+        </div>
+        <div style="grid-column:1/-1;">
+          <label for="hero-title">Hero Title</label>
+          <input id="hero-title" placeholder="Industrial Supplies Built for Reliable Work" />
+        </div>
+        <div style="grid-column:1/-1;">
+          <label for="hero-subtitle">Hero Subtitle</label>
+          <textarea id="hero-subtitle"></textarea>
+        </div>
+        <div>
+          <label for="hero-primary-cta">Hero Primary Button Label</label>
+          <input id="hero-primary-cta" placeholder="Browse Categories" />
+        </div>
+        <div>
+          <label for="hero-secondary-cta">Hero Secondary Button Label</label>
+          <input id="hero-secondary-cta" placeholder="Order on WhatsApp" />
+        </div>
+        <div>
+          <label for="hero-bg-file">Hero Background Image</label>
+          <input id="hero-bg-file" type="file" accept="image/*" />
+          <p class="small muted">Optional image for premium hero banner background.</p>
+        </div>
+        <div>
+          <img id="hero-bg-preview" class="product-preview hidden" alt="Hero background preview" />
+        </div>
+        <div class="inline-actions" style="align-items:end; grid-column:1/-1;">
+          <button type="submit">Save Settings</button>
+        </div>
+      </form>
+      <p id="settings-notice" class="notice"></p>
+    </section>
+
+    <section class="grid-2">
+      <article class="card">
+        <h2>Categories</h2>
+        <form id="category-form">
+          <label for="category-name">New Category Name</label>
+          <input id="category-name" placeholder="e.g. Adhesives" required />
+          <div class="inline-actions" style="margin-top:0.6rem;">
+            <button type="submit">Add Category</button>
+          </div>
+        </form>
+        <p id="category-notice" class="notice"></p>
+        <ul id="categories-list" class="list-clean"></ul>
+      </article>
+
+      <article class="card">
+        <h2>Sub-Categories</h2>
+        <form id="subcategory-form">
+          <label for="subcategory-category">Category</label>
+          <select id="subcategory-category" required></select>
+
+          <label for="subcategory-name">Sub-Category Name</label>
+          <input id="subcategory-name" placeholder="e.g. Structural" required />
+
+          <div class="inline-actions" style="margin-top:0.6rem;">
+            <button type="submit">Add Sub-Category</button>
+          </div>
+        </form>
+        <p id="subcategory-notice" class="notice"></p>
+        <ul id="subcategories-list" class="list-clean"></ul>
+      </article>
+    </section>
+
+
+    <section class="card">
+      <h2>Shop Slideshow (All Pages)</h2>
+      <form id="home-slide-form">
+        <label for="home-slide-file">Upload Slide Image</label>
+        <input id="home-slide-file" type="file" accept="image/*" />
+        <div class="inline-actions" style="margin-top:0.6rem;">
+          <button type="submit">Add Slide</button>
+        </div>
+      </form>
+      <p id="home-slide-notice" class="notice"></p>
+      <div id="home-slides-list" class="slide-list"></div>
+    </section>
+
+    <section class="card">
+      <h2>Products</h2>
+      <form id="product-form" class="grid-2">
+        <input id="product-id" type="hidden" />
+
+        <div>
+          <label for="product-name">Product Name</label>
+          <input id="product-name" required />
+        </div>
+        <div>
+          <label for="product-slug">Slug</label>
+          <input id="product-slug" placeholder="auto-generated if left empty" />
+        </div>
+
+        <div>
+          <label for="product-category">Category</label>
+          <select id="product-category" required></select>
+        </div>
+        <div>
+          <label for="product-subcategory">Sub-Category</label>
+          <select id="product-subcategory" required></select>
+        </div>
+
+        <div>
+          <label for="product-image-file">Product Image Upload</label>
+          <input id="product-image-file" type="file" accept="image/*" />
+          <input id="product-image-data" type="hidden" />
+          <p class="small muted">Upload image and it will auto-crop to square for consistent display.</p>
+          <img id="product-image-preview" class="product-preview hidden" alt="Product image preview" />
+        </div>
+        <div>
+          <label for="product-price">Price (BDT)</label>
+          <input id="product-price" placeholder="e.g. 450" />
+        </div>
+        <div>
+          <label for="product-stock">Stock Status</label>
+          <input id="product-stock" placeholder="e.g. In Stock" />
+        </div>
+
+        <div>
+          <label>Product Badges</label>
+          <div class="inline-actions badge-options">
+            <label class="badge-option"><input type="checkbox" id="badge-new" value="new" /> New</label>
+            <label class="badge-option"><input type="checkbox" id="badge-hot" value="hot" /> Hot</label>
+            <label class="badge-option"><input type="checkbox" id="badge-best-seller" value="best-seller" /> Best Seller</label>
+          </div>
+          <p class="small muted">"In Stock" badge is shown automatically when stock is available.</p>
+        </div>
+
+        <div>
+          <label for="product-features">Features (comma separated)</label>
+          <input id="product-features" placeholder="Strong grip, Quick dry" />
+        </div>
+
+        <div>
+          <label for="product-specs">Specifications (one per line: Label: Value)</label>
+          <textarea id="product-specs" placeholder="Pack Size: 400ml&#10;Finish: Matte"></textarea>
+        </div>
+
+        <div>
+          <label for="product-trust-points">Trust Signals (one per line)</label>
+          <textarea id="product-trust-points" placeholder="Original Product&#10;Fast Delivery"></textarea>
+        </div>
+
+        <div style="grid-column: 1 / -1;">
+          <label for="product-description">Description</label>
+          <textarea id="product-description"></textarea>
+        </div>
+
+        <div class="inline-actions" style="grid-column:1/-1;">
+          <button type="submit">Save Product</button>
+          <button type="button" id="cancel-edit" class="secondary">Cancel Edit</button>
+        </div>
+      </form>
+      <p id="product-notice" class="notice"></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Slug</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Badges</th>
+              <th>Specs</th>
+              <th>Image</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="shop-data.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
