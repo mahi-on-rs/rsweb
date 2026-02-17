@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOP SEAL | Product Details</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="top-nav" id="top-nav">
+    <div class="container top-nav-inner">
+      <a class="top-nav-brand" href="index.html">TOP SEAL</a>
+      <button class="top-nav-toggle" id="top-nav-toggle" type="button" aria-expanded="false" aria-controls="top-nav-links">Menu</button>
+      <form class="top-nav-search" id="top-nav-search" role="search">
+        <input id="top-nav-search-input" type="search" placeholder="Search products..." aria-label="Search products" />
+        <button type="submit">Search</button>
+      </form>
+      <nav class="top-nav-links" id="top-nav-links" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="index.html">Categories</a>
+        <a href="#footer-whatsapp">Contact</a>
+      </nav>
+    </div>
+  </div>
+  <header class="site-header compact">
+    <div class="container">
+      <p class="brand-tag" id="brand-tag">TOP SEAL</p>
+      <h1>Product Checkout</h1>
+      <a class="back-link" href="index.html">&larr; Back to categories</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="product-checkout" id="product-detail">
+      <div id="product-image-wrap"></div>
+      <div>
+        <h2 id="product-name">Loading product...</h2>
+        <div id="product-badges" class="product-badges"></div>
+        <p id="product-price" class="checkout-price"></p>
+        <p id="product-stock" class="checkout-stock"></p>
+        <p id="product-category"></p>
+        <p id="product-description"></p>
+        <ul id="product-features"></ul>
+
+        <section class="checkout-section" id="specs-section">
+          <h3>Specifications</h3>
+          <div id="product-specs" class="specs-grid"></div>
+        </section>
+
+        <section class="checkout-section" id="trust-section">
+          <h3>Why order from us</h3>
+          <ul id="product-trust-points" class="trust-list"></ul>
+        </section>
+
+        <a class="buy-button checkout-buy" id="buy-button" href="#">Order via WhatsApp</a>
+        <p class="small-note">A product card message will be ready in WhatsApp.</p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <section>
+        <h2 class="footer-title">Sub-Categories</h2>
+        <p class="footer-text footer-links-inline" id="footer-subcategories"></p>
+      </section>
+      <section>
+        <h2 class="footer-title">Contact</h2>
+        <p class="footer-text" id="footer-brand">TOP SEAL</p>
+        <p class="footer-text"><a class="footer-link" id="footer-whatsapp" href="#" target="_blank" rel="noopener noreferrer">WhatsApp Chat</a></p>
+        <p class="footer-text" id="footer-address"></p>
+        <p class="footer-text"><a class="footer-link" id="footer-map-link" href="#" target="_blank" rel="noopener noreferrer">View on Map</a></p>
+      </section>
+      <section>
+        <h2 class="footer-title">Business Hours</h2>
+        <ul class="footer-hours" id="footer-hours"></ul>
+      </section>
+      <section>
+        <h2 class="footer-title">Follow Us</h2>
+        <div class="footer-social" id="footer-social"></div>
+      </section>
+    </div>
+  </footer>
+
+  <script src="shop-data.js"></script>
+  <script>
+    (async () => {
+    const data = await loadTopSealData();
+    applyStoreTheme(data.settings || {});
+    const params = new URLSearchParams(window.location.search);
+    const itemKey = params.get("item");
+    const item = data.products.find((product) => product.slug === itemKey);
+
+    const brandName = data.settings?.brandName || "TOP SEAL";
+    const whatsapp = data.settings?.whatsappNumber || "8801894527991";
+
+    document.getElementById("brand-tag").textContent = brandName;
+    document.getElementById("footer-brand").textContent = brandName;
+    document.getElementById("footer-whatsapp").href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello ${brandName}`)}`;
+    document.getElementById("footer-address").textContent = data.settings?.contactAddress || "";
+
+    const mapLinkEl = document.getElementById("footer-map-link");
+    const mapLink = data.settings?.mapLink || "";
+    if (mapLink) {
+      mapLinkEl.href = mapLink;
+      mapLinkEl.classList.remove("hidden");
+    } else {
+      mapLinkEl.classList.add("hidden");
+    }
+
+    const hoursList = document.getElementById("footer-hours");
+    const hours = (data.settings?.businessHours || "").split("\n").map((line) => line.trim()).filter(Boolean);
+    hoursList.innerHTML = "";
+    hours.forEach((line) => {
+      const li = document.createElement("li");
+      li.textContent = line;
+      hoursList.appendChild(li);
+    });
+
+    const socialContainer = document.getElementById("footer-social");
+    socialContainer.innerHTML = "";
+    [
+      { label: "Facebook", href: data.settings?.facebookUrl },
+      { label: "Instagram", href: data.settings?.instagramUrl },
+      { label: "YouTube", href: data.settings?.youtubeUrl }
+    ].filter((item) => item.href).forEach((item) => {
+      const a = document.createElement("a");
+      a.className = "footer-link";
+      a.href = item.href;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = item.label;
+      socialContainer.appendChild(a);
+    });
+
+    const footerSub = document.getElementById("footer-subcategories");
+    const subLinks = [];
+    data.categories.forEach((cat) => cat.subcategories.forEach((sub) => {
+      const a = document.createElement("a");
+      a.className = "footer-link";
+      a.href = `category.html?cat=${cat.slug}&sub=${sub.slug}`;
+      a.textContent = sub.label;
+      subLinks.push(a);
+    }));
+    subLinks.forEach((a, idx) => {
+      footerSub.appendChild(a);
+      if (idx < subLinks.length - 1) footerSub.append(", ");
+    });
+
+    const productName = document.getElementById("product-name");
+    const productPrice = document.getElementById("product-price");
+    const productBadges = document.getElementById("product-badges");
+    const productStock = document.getElementById("product-stock");
+    const productCategory = document.getElementById("product-category");
+    const productDescription = document.getElementById("product-description");
+    const productFeatures = document.getElementById("product-features");
+    const specsSection = document.getElementById("specs-section");
+    const productSpecs = document.getElementById("product-specs");
+    const trustSection = document.getElementById("trust-section");
+    const productTrustPoints = document.getElementById("product-trust-points");
+    const productImageWrap = document.getElementById("product-image-wrap");
+    const buyButton = document.getElementById("buy-button");
+
+    if (!item) {
+      productName.textContent = "Product not found";
+      productCategory.textContent = "Please return to categories and pick a product.";
+      productDescription.textContent = "";
+      productBadges.innerHTML = "";
+      specsSection.classList.add("hidden");
+      trustSection.classList.add("hidden");
+      buyButton.style.display = "none";
+    } else {
+      const category = data.categories.find((cat) => cat.id === item.categoryId);
+      productName.textContent = item.name;
+
+      const badgeMap = {
+        "new": "New",
+        "hot": "Hot",
+        "best-seller": "Best Seller"
+      };
+      const visibleBadges = (item.badges || []).map((key) => badgeMap[key]).filter(Boolean);
+      const stockText = (item.stock || "").toLowerCase();
+      if (stockText && !stockText.includes("out") && !stockText.includes("unavailable")) {
+        visibleBadges.push("In Stock");
+      }
+      productBadges.innerHTML = visibleBadges.map((badge) => `<span class="product-badge">${badge}</span>`).join("");
+      productPrice.textContent = `Price: ৳ ${item.price || "Ask Price"}`;
+      productStock.textContent = `Stock: ${item.stock || "In Stock"}`;
+      productCategory.textContent = `Category: ${category?.label || "Unknown"}`;
+      productDescription.textContent = item.description;
+      productFeatures.innerHTML = "";
+
+      if (item.imageData) {
+        productImageWrap.innerHTML = `<img class="checkout-image" src="${optimizeImageSource(item.imageData, { width: 900 })}" alt="${item.name}" loading="eager" decoding="async" fetchpriority="high" />`;
+      } else {
+        productImageWrap.innerHTML = `<div class="checkout-image-placeholder">No Image</div>`;
+      }
+
+      (item.features || []).forEach((feature) => {
+        const li = document.createElement("li");
+        li.textContent = feature;
+        productFeatures.appendChild(li);
+      });
+
+      const specs = Array.isArray(item.specs) ? item.specs.filter((spec) => spec?.label && spec?.value) : [];
+      productSpecs.innerHTML = "";
+      if (specs.length) {
+        specsSection.classList.remove("hidden");
+        specs.forEach((spec) => {
+          const row = document.createElement("div");
+          row.className = "spec-item";
+          row.innerHTML = `<span class="spec-label">${spec.label}</span><span class="spec-value">${spec.value}</span>`;
+          productSpecs.appendChild(row);
+        });
+      } else {
+        specsSection.classList.add("hidden");
+      }
+
+      const trustPoints = (Array.isArray(item.trustPoints) && item.trustPoints.length)
+        ? item.trustPoints
+        : ["Original quality products", "Fast response on WhatsApp", "Reliable support from TOP SEAL"];
+      productTrustPoints.innerHTML = "";
+      trustSection.classList.remove("hidden");
+      trustPoints.forEach((point) => {
+        const li = document.createElement("li");
+        li.textContent = point;
+        productTrustPoints.appendChild(li);
+      });
+
+      const productLink = window.location.href;
+      const messageCard = `🧾 Product Order\n--------------------\nBrand: ${brandName}\nProduct: ${item.name}\nPrice: ৳ ${item.price || "Ask Price"}\nStock: ${item.stock || "In Stock"}\nCategory: ${category?.label || "Unknown"}\nLink: ${productLink}\n--------------------\nPlease confirm availability.`;
+
+      buyButton.href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(messageCard)}`;
+      buyButton.target = "_blank";
+      buyButton.rel = "noopener noreferrer";
+    }
+
+    const searchForm = document.getElementById("top-nav-search");
+    const searchInput = document.getElementById("top-nav-search-input");
+    searchForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const query = (searchInput?.value || "").trim().toLowerCase();
+      if (!query) return;
+      const match = (data.products || []).find((p) => p.name.toLowerCase().includes(query) || p.slug.includes(query.replace(/\s+/g, "-")));
+      if (match) {
+        window.location.href = `product.html?item=${match.slug}`;
+      }
+    });
+
+    const navToggle = document.getElementById("top-nav-toggle");
+    const topNav = document.getElementById("top-nav");
+    const navLinks = document.getElementById("top-nav-links");
+    navToggle?.addEventListener("click", () => {
+      const expanded = navToggle.getAttribute("aria-expanded") === "true";
+      navToggle.setAttribute("aria-expanded", String(!expanded));
+      topNav.classList.toggle("open", !expanded);
+    });
+    navLinks?.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        navToggle?.setAttribute("aria-expanded", "false");
+        topNav.classList.remove("open");
+      });
+    });
+    })();
+  </script>
+</body>
+</html>
