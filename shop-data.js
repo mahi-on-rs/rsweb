@@ -309,7 +309,8 @@ async function apiRequest(path, options = {}) {
   return null;
 }
 
-async function loadTopSealData() {
+async function loadTopSealData(options = {}) {
+  const { allowLocalFallback = true } = options;
   if (LOCAL_ONLY_MODE) {
     try {
       const raw = localStorage.getItem(TOPSEAL_DATA_KEY);
@@ -323,7 +324,8 @@ async function loadTopSealData() {
   try {
     const payload = await apiRequest("/state", { method: "GET" });
     return mergeWithDefaults(payload);
-  } catch {
+  } catch (error) {
+    if (!allowLocalFallback) throw error;
     try {
       const raw = localStorage.getItem(TOPSEAL_DATA_KEY);
       if (!raw) return structuredClone(TOPSEAL_DEFAULT_DATA);
@@ -334,7 +336,8 @@ async function loadTopSealData() {
   }
 }
 
-async function saveTopSealData(data) {
+async function saveTopSealData(data, options = {}) {
+  const { allowLocalFallback = true } = options;
   if (LOCAL_ONLY_MODE) {
     localStorage.setItem(TOPSEAL_DATA_KEY, JSON.stringify(data));
     return;
@@ -345,7 +348,8 @@ async function saveTopSealData(data) {
       method: "PUT",
       body: JSON.stringify(data)
     });
-  } catch {
+  } catch (error) {
+    if (!allowLocalFallback) throw error;
     localStorage.setItem(TOPSEAL_DATA_KEY, JSON.stringify(data));
   }
 }
