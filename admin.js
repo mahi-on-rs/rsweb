@@ -2,11 +2,11 @@ const AUTH_KEY = "topseal_admin_auth";
 const CROPPED_IMAGE_SIZE = 800;
 
 async function loadData() {
-  return loadTopSealData();
+  return loadTopSealData({ allowLocalFallback: false });
 }
 
 async function saveData(data) {
-  await saveTopSealData(data);
+  await saveTopSealData(data, { allowLocalFallback: false });
 }
 
 function slugify(text) {
@@ -143,7 +143,17 @@ async function bootstrapDashboardPage() {
     }
   });
 
-  const data = await loadData();
+  let data;
+  try {
+    data = await loadData();
+  } catch {
+    alert("Could not load admin data from API. Please check API/CORS and try again.");
+    await logoutAdmin();
+    sessionStorage.removeItem(AUTH_KEY);
+    window.location.href = "admin-login.html";
+    return;
+  }
+
   applyThemeColor(data.settings.primaryColor);
 
   const settingsForm = document.getElementById("settings-form");
