@@ -11,6 +11,8 @@ const TOPSEAL_DEFAULT_DATA = {
     heroPrimaryCtaLabel: "Browse Categories",
     heroSecondaryCtaLabel: "Order on WhatsApp",
     heroBackgroundImage: "",
+    brandLogoImage: "",
+    faviconImage: "",
     secondaryColor: "#16324f",
     backgroundColor: "#f6f9fc",
     surfaceColor: "#ffffff",
@@ -449,4 +451,142 @@ async function uploadImageToStorage(file) {
 
   const payload = await response.json();
   return payload.url;
+}
+
+
+function getDisplayBadges(product) {
+  const badgeMap = {
+    "new": "New",
+    "hot": "Hot",
+    "best-seller": "Best Seller"
+  };
+  const badges = (product.badges || []).map((key) => badgeMap[key]).filter(Boolean);
+  const stockText = (product.stock || "").toLowerCase();
+  if (stockText && !stockText.includes("out") && !stockText.includes("unavailable")) {
+    badges.push("In Stock");
+  }
+  return badges;
+}
+
+function scoreProductSearch(product, query) {
+  const q = (query || "").trim().toLowerCase();
+  if (!q) return 0;
+
+  const name = (product.name || "").toLowerCase();
+  const slug = (product.slug || "").toLowerCase();
+  const text = `${name} ${slug} ${(product.description || "").toLowerCase()}`;
+  const tokens = q.split(/\s+/).filter(Boolean);
+
+  let score = 0;
+  if (name === q || slug === q) score += 300;
+  if (name.startsWith(q)) score += 160;
+  if (name.includes(q)) score += 120;
+  if (slug.includes(q)) score += 100;
+
+  tokens.forEach((token) => {
+    if (name.includes(token)) score += 30;
+    if (slug.includes(token)) score += 24;
+    if (text.includes(token)) score += 12;
+  });
+
+  const compactQ = q.replace(/\s+/g, "");
+  const compactName = name.replace(/\s+/g, "");
+  if (compactQ && compactName.includes(compactQ)) score += 40;
+
+  return score;
+}
+
+function findProductsByRelevance(products, query, limit = 8) {
+  return (products || [])
+    .map((product) => ({ product, score: scoreProductSearch(product, query) }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((entry) => entry.product);
+}
+
+function setupTopNavSearch(data, options = {}) {
+  const form = document.getElementById(options.formId || "top-nav-search");
+  const input = document.getElementById(options.inputId || "top-nav-search-input");
+  if (!form || !input) return;
+
+  form.classList.add("search-ready");
+
+  const results = document.createElement("div");
+  results.className = "search-suggestions hidden";
+  results.id = "search-suggestions";
+  results.setAttribute("role", "listbox");
+  form.appendChild(results);
+
+  const searchProducts = Array.isArray(data?.products) ? data.products : [];
+
+  function renderList(query) {
+    const q = (query || "").trim();
+    if (!q) {
+      results.classList.add("hidden");
+      results.innerHTML = "";
+      return;
+    }
+
+    const matches = findProductsByRelevance(searchProducts, q, 8);
+    if (!matches.length) {
+      results.innerHTML = `<p class="search-empty">No close products found for “${q}”.</p>`;
+      results.classList.remove("hidden");
+      return;
+    }
+
+    results.innerHTML = "";
+    matches.forEach((product) => {
+      const item = document.createElement("a");
+      item.className = "search-suggestion-item";
+      item.href = `product.html?item=${product.slug}`;
+      item.setAttribute("role", "option");
+
+      const imageHtml = product.imageData
+        ? `<img class="search-suggestion-image" src="${optimizeImageSource(product.imageData, { width: 120 })}" alt="${product.name}" loading="lazy" decoding="async" />`
+        : `<div class="search-suggestion-placeholder">No Image</div>`;
+      const badges = getDisplayBadges(product).map((badge) => `<span class="search-badge">${badge}</span>`).join("");
+      item.innerHTML = `
+        ${imageHtml}
+        <span class="search-suggestion-meta">
+          <span class="search-suggestion-name">${product.name}</span>
+          <span class="search-suggestion-price">৳ ${product.price || "Ask Price"}</span>
+          <span class="search-suggestion-badges">${badges}</span>
+        </span>
+      `;
+
+      results.appendChild(item);
+    });
+    results.classList.remove("hidden");
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const q = (input.value || "").trim();
+    if (!q) return;
+
+    const matches = findProductsByRelevance(searchProducts, q, 8);
+    renderList(q);
+
+    if (!matches.length) return;
+    const exact = matches.find((product) => {
+      const name = (product.name || "").toLowerCase();
+      const slug = (product.slug || "").toLowerCase();
+      const query = q.toLowerCase();
+      return name === query || slug === query || slug === query.replace(/\s+/g, "-");
+    });
+
+    if (exact) {
+      window.location.href = `product.html?item=${exact.slug}`;
+    }
+  });
+
+  input.addEventListener("input", () => renderList(input.value));
+  input.addEventListener("focus", () => renderList(input.value));
+
+  document.addEventListener("click", (event) => {
+    if (!form.contains(event.target)) {
+      results.classList.add("hidden");
+    }
+  });
 }

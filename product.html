@@ -4,12 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TOP SEAL | Product Details</title>
+  <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="assets/top-seal-favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="top-nav" id="top-nav">
     <div class="container top-nav-inner">
-      <a class="top-nav-brand" href="index.html">TOP SEAL</a>
+      <a class="top-nav-brand" id="top-nav-brand" href="index.html">
+        <img class="brand-logo" id="brand-logo" src="assets/top-seal-mark.svg" alt="TOP SEAL logo" />
+        <span class="brand-name" id="brand-name-label">TOP SEAL</span>
+      </a>
       <button class="top-nav-toggle" id="top-nav-toggle" type="button" aria-expanded="false" aria-controls="top-nav-links">Menu</button>
       <form class="top-nav-search" id="top-nav-search" role="search">
         <input id="top-nav-search-input" type="search" placeholder="Search products..." aria-label="Search products" />
@@ -17,8 +21,11 @@
       </form>
       <nav class="top-nav-links" id="top-nav-links" aria-label="Primary">
         <a href="index.html">Home</a>
-        <a href="index.html">Categories</a>
-        <a href="#footer-whatsapp">Contact</a>
+        <div class="nav-dropdown" id="category-dropdown">
+          <a href="index.html#main-category-nav" class="nav-dropdown-trigger">Categories</a>
+          <div class="nav-dropdown-menu" id="category-dropdown-menu" role="menu" aria-label="Category quick links"></div>
+        </div>
+        <a href="contact.html">Contact</a>
       </nav>
     </div>
   </div>
@@ -133,6 +140,22 @@
       socialContainer.appendChild(a);
     });
 
+
+    document.getElementById("brand-name-label").textContent = brandName;
+    const logoEl = document.getElementById("brand-logo");
+    logoEl.src = data.settings?.brandLogoImage || "assets/top-seal-mark.svg";
+    const dynamicFavicon = document.getElementById("dynamic-favicon");
+    dynamicFavicon.href = data.settings?.faviconImage || "assets/top-seal-favicon.svg";
+
+    const categoryDropdownMenu = document.getElementById("category-dropdown-menu");
+    data.categories.forEach((catItem) => {
+      const itemLink = document.createElement("a");
+      itemLink.href = `category.html?cat=${catItem.slug}`;
+      itemLink.textContent = catItem.label;
+      itemLink.setAttribute("role", "menuitem");
+      categoryDropdownMenu.appendChild(itemLink);
+    });
+
     const footerSub = document.getElementById("footer-subcategories");
     const subLinks = [];
     data.categories.forEach((cat) => cat.subcategories.forEach((sub) => {
@@ -235,17 +258,7 @@
       buyButton.rel = "noopener noreferrer";
     }
 
-    const searchForm = document.getElementById("top-nav-search");
-    const searchInput = document.getElementById("top-nav-search-input");
-    searchForm?.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const query = (searchInput?.value || "").trim().toLowerCase();
-      if (!query) return;
-      const match = (data.products || []).find((p) => p.name.toLowerCase().includes(query) || p.slug.includes(query.replace(/\s+/g, "-")));
-      if (match) {
-        window.location.href = `product.html?item=${match.slug}`;
-      }
-    });
+    setupTopNavSearch(data);
 
     const navToggle = document.getElementById("top-nav-toggle");
     const topNav = document.getElementById("top-nav");
