@@ -11,6 +11,17 @@ const TOPSEAL_DEFAULT_DATA = {
     heroPrimaryCtaLabel: "Browse Categories",
     heroSecondaryCtaLabel: "Order on WhatsApp",
     heroBackgroundImage: "",
+    brandLogoImage: "",
+    faviconImage: "",
+    entryPopupEnabled: false,
+    entryPopupImage: "",
+    entryPopupLink: "",
+    entryPopupStartAt: "",
+    entryPopupEndAt: "",
+    broadcastEnabled: false,
+    broadcastText: "",
+    broadcastFlow: true,
+    broadcastSpeedSeconds: 22,
     secondaryColor: "#16324f",
     backgroundColor: "#f6f9fc",
     surfaceColor: "#ffffff",
@@ -449,4 +460,269 @@ async function uploadImageToStorage(file) {
 
   const payload = await response.json();
   return payload.url;
+}
+
+
+function getDisplayBadges(product) {
+  const badgeMap = {
+    "new": "New",
+    "hot": "Hot",
+    "best-seller": "Best Seller"
+  };
+  const badges = (product.badges || []).map((key) => badgeMap[key]).filter(Boolean);
+  const stockText = (product.stock || "").toLowerCase();
+  if (stockText && !stockText.includes("out") && !stockText.includes("unavailable")) {
+    badges.push("In Stock");
+  }
+  return badges;
+}
+
+function scoreProductSearch(product, query) {
+  const q = (query || "").trim().toLowerCase();
+  if (!q) return 0;
+
+  const name = (product.name || "").toLowerCase();
+  const slug = (product.slug || "").toLowerCase();
+  const text = `${name} ${slug} ${(product.description || "").toLowerCase()}`;
+  const tokens = q.split(/\s+/).filter(Boolean);
+
+  let score = 0;
+  if (name === q || slug === q) score += 300;
+  if (name.startsWith(q)) score += 160;
+  if (name.includes(q)) score += 120;
+  if (slug.includes(q)) score += 100;
+
+  tokens.forEach((token) => {
+    if (name.includes(token)) score += 30;
+    if (slug.includes(token)) score += 24;
+    if (text.includes(token)) score += 12;
+  });
+
+  const compactQ = q.replace(/\s+/g, "");
+  const compactName = name.replace(/\s+/g, "");
+  if (compactQ && compactName.includes(compactQ)) score += 40;
+
+  return score;
+}
+
+function findProductsByRelevance(products, query, limit = 8) {
+  return (products || [])
+    .map((product) => ({ product, score: scoreProductSearch(product, query) }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((entry) => entry.product);
+}
+
+function setupTopNavSearch(data, options = {}) {
+  const form = document.getElementById(options.formId || "top-nav-search");
+  const input = document.getElementById(options.inputId || "top-nav-search-input");
+  if (!form || !input) return;
+
+  form.classList.add("search-ready");
+
+  const results = document.createElement("div");
+  results.className = "search-suggestions hidden";
+  results.id = "search-suggestions";
+  results.setAttribute("role", "listbox");
+  form.appendChild(results);
+
+  const searchProducts = Array.isArray(data?.products) ? data.products : [];
+
+  function renderList(query) {
+    const q = (query || "").trim();
+    if (!q) {
+      results.classList.add("hidden");
+      results.innerHTML = "";
+      return;
+    }
+
+    const matches = findProductsByRelevance(searchProducts, q, 8);
+    if (!matches.length) {
+      results.innerHTML = `<p class="search-empty">No close products found for “${q}”.</p>`;
+      results.classList.remove("hidden");
+      return;
+    }
+
+    results.innerHTML = "";
+    matches.forEach((product) => {
+      const item = document.createElement("a");
+      item.className = "search-suggestion-item";
+      item.href = `product.html?item=${product.slug}`;
+      item.setAttribute("role", "option");
+
+      const imageHtml = product.imageData
+        ? `<img class="search-suggestion-image" src="${optimizeImageSource(product.imageData, { width: 120 })}" alt="${product.name}" loading="lazy" decoding="async" />`
+        : `<div class="search-suggestion-placeholder">No Image</div>`;
+      const badges = getDisplayBadges(product).map((badge) => `<span class="search-badge">${badge}</span>`).join("");
+      item.innerHTML = `
+        ${imageHtml}
+        <span class="search-suggestion-meta">
+          <span class="search-suggestion-name">${product.name}</span>
+          <span class="search-suggestion-price">৳ ${product.price || "Ask Price"}</span>
+          <span class="search-suggestion-badges">${badges}</span>
+        </span>
+      `;
+
+      results.appendChild(item);
+    });
+    results.classList.remove("hidden");
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const q = (input.value || "").trim();
+    if (!q) return;
+
+    const matches = findProductsByRelevance(searchProducts, q, 8);
+    renderList(q);
+
+    if (!matches.length) return;
+    const exact = matches.find((product) => {
+      const name = (product.name || "").toLowerCase();
+      const slug = (product.slug || "").toLowerCase();
+      const query = q.toLowerCase();
+      return name === query || slug === query || slug === query.replace(/\s+/g, "-");
+    });
+
+    if (exact) {
+      window.location.href = `product.html?item=${exact.slug}`;
+    }
+  });
+
+  input.addEventListener("input", () => renderList(input.value));
+  input.addEventListener("focus", () => renderList(input.value));
+
+  document.addEventListener("click", (event) => {
+    if (!form.contains(event.target)) {
+      results.classList.add("hidden");
+    }
+  });
+}
+
+function setupPageLoadingScreen(message = "Loading store…") {
+  if (document.getElementById("page-loading-overlay")) return;
+  const overlay = document.createElement("div");
+  overlay.id = "page-loading-overlay";
+  overlay.className = "page-loading-overlay";
+  overlay.innerHTML = `<div class="page-loading-card"><div class="page-loading-spinner" aria-hidden="true"></div><p>${message}</p></div>`;
+  document.body.appendChild(overlay);
+}
+
+function hidePageLoadingScreen() {
+  const overlay = document.getElementById("page-loading-overlay");
+  if (!overlay) return;
+  overlay.classList.add("is-hidden");
+  setTimeout(() => overlay.remove(), 260);
+}
+
+function setupSubcategoryDropdown(data, menuId = "subcategory-dropdown-menu") {
+  const menu = document.getElementById(menuId);
+  if (!menu) return;
+  menu.innerHTML = "";
+  (data.categories || []).forEach((cat) => {
+    (cat.subcategories || []).forEach((sub) => {
+      const link = document.createElement("a");
+      link.href = `category.html?cat=${cat.slug}&sub=${sub.slug}`;
+      link.textContent = `${cat.label} · ${sub.label}`;
+      link.setAttribute("role", "menuitem");
+      menu.appendChild(link);
+    });
+  });
+}
+
+function setupBroadcastBar(settings = {}) {
+  const bar = document.getElementById("broadcast-bar");
+  const textEl = document.getElementById("broadcast-text");
+  if (!bar || !textEl) return;
+
+  const enabled = !!settings.broadcastEnabled && !!(settings.broadcastText || "").trim();
+  if (!enabled) {
+    bar.classList.add("hidden");
+    return;
+  }
+
+  bar.classList.remove("hidden");
+  textEl.textContent = settings.broadcastText;
+  const flowEnabled = settings.broadcastFlow !== false;
+  const speed = Math.max(8, Number(settings.broadcastSpeedSeconds) || 22);
+  bar.classList.toggle("no-flow", !flowEnabled);
+  bar.style.setProperty("--broadcast-speed", `${speed}s`);
+}
+
+function setupEntryPopup(settings = {}) {
+  return new Promise((resolve) => {
+    const enabled = !!settings.entryPopupEnabled;
+    const image = settings.entryPopupImage || "";
+    if (!enabled || !image) {
+      resolve();
+      return;
+    }
+
+    const sessionKey = "topseal_entry_popup_seen";
+    if (sessionStorage.getItem(sessionKey) === "1") {
+      resolve();
+      return;
+    }
+
+    const now = Date.now();
+    const starts = settings.entryPopupStartAt ? Date.parse(settings.entryPopupStartAt) : NaN;
+    const ends = settings.entryPopupEndAt ? Date.parse(settings.entryPopupEndAt) : NaN;
+    if (!Number.isNaN(starts) && now < starts) {
+      resolve();
+      return;
+    }
+    if (!Number.isNaN(ends) && now > ends) {
+      resolve();
+      return;
+    }
+
+    sessionStorage.setItem(sessionKey, "1");
+
+    const preloader = new Image();
+    preloader.onload = () => {
+      const modal = document.createElement("div");
+      modal.className = "entry-popup-overlay";
+
+      const shell = document.createElement("div");
+      shell.className = "entry-popup-shell";
+
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "entry-popup-close";
+      close.setAttribute("aria-label", "Close popup");
+      close.textContent = "×";
+
+      const card = document.createElement(settings.entryPopupLink ? "a" : "div");
+      card.className = "entry-popup-card";
+      if (settings.entryPopupLink) {
+        card.href = settings.entryPopupLink;
+        card.target = "_blank";
+        card.rel = "noopener noreferrer";
+      }
+
+      const img = document.createElement("img");
+      img.src = image;
+      img.alt = "Event notification";
+      img.className = "entry-popup-image";
+      card.appendChild(img);
+
+      const closePopup = () => modal.remove();
+      close.addEventListener("click", closePopup);
+      card.addEventListener("click", () => {
+        setTimeout(closePopup, 0);
+      });
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closePopup();
+      });
+
+      shell.append(close, card);
+      modal.appendChild(shell);
+      document.body.appendChild(modal);
+      resolve();
+    };
+
+    preloader.onerror = () => resolve();
+    preloader.src = image;
+  });
 }

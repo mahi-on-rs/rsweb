@@ -174,6 +174,20 @@ async function bootstrapDashboardPage() {
   const heroSecondaryCtaInput = document.getElementById("hero-secondary-cta");
   const heroBgFileInput = document.getElementById("hero-bg-file");
   const heroBgPreview = document.getElementById("hero-bg-preview");
+  const brandLogoFileInput = document.getElementById("brand-logo-file");
+  const brandLogoPreview = document.getElementById("brand-logo-preview");
+  const faviconFileInput = document.getElementById("favicon-file");
+  const faviconPreview = document.getElementById("favicon-preview");
+  const entryPopupEnabledInput = document.getElementById("entry-popup-enabled");
+  const entryPopupLinkInput = document.getElementById("entry-popup-link");
+  const entryPopupStartInput = document.getElementById("entry-popup-start");
+  const entryPopupEndInput = document.getElementById("entry-popup-end");
+  const entryPopupFileInput = document.getElementById("entry-popup-file");
+  const entryPopupPreview = document.getElementById("entry-popup-preview");
+  const broadcastEnabledInput = document.getElementById("broadcast-enabled");
+  const broadcastFlowInput = document.getElementById("broadcast-flow");
+  const broadcastTextInput = document.getElementById("broadcast-text");
+  const broadcastSpeedInput = document.getElementById("broadcast-speed");
 
   const categoriesList = document.getElementById("categories-list");
   const subcategoriesList = document.getElementById("subcategories-list");
@@ -233,6 +247,16 @@ async function bootstrapDashboardPage() {
     heroBgPreview.classList.remove("hidden");
   }
 
+  function setSimplePreview(el, imageData) {
+    if (!imageData) {
+      el.removeAttribute("src");
+      el.classList.add("hidden");
+      return;
+    }
+    el.src = imageData;
+    el.classList.remove("hidden");
+  }
+
   function getSelectedBadges() {
     return [
       badgeNewInput.checked ? "new" : "",
@@ -263,6 +287,66 @@ async function bootstrapDashboardPage() {
       data.settings.heroBackgroundImage = finalImage;
       setHeroPreview(finalImage);
       setNotice(settingsNotice, "Hero background uploaded. Save settings to publish.");
+    } catch (error) {
+      setNotice(settingsNotice, error.message, "error");
+    }
+  });
+
+
+  brandLogoFileInput.addEventListener("change", async () => {
+    const file = brandLogoFileInput.files?.[0];
+    if (!file) return;
+
+    try {
+      let finalImage = "";
+      try {
+        finalImage = await uploadImageToStorage(file);
+      } catch {
+        finalImage = await autoCropImageToSquare(file);
+      }
+      data.settings.brandLogoImage = finalImage;
+      setSimplePreview(brandLogoPreview, finalImage);
+      setNotice(settingsNotice, "Brand logo uploaded. Save settings to publish.");
+    } catch (error) {
+      setNotice(settingsNotice, error.message, "error");
+    }
+  });
+
+  faviconFileInput.addEventListener("change", async () => {
+    const file = faviconFileInput.files?.[0];
+    if (!file) return;
+
+    try {
+      let finalImage = "";
+      try {
+        finalImage = await uploadImageToStorage(file);
+      } catch {
+        finalImage = await autoCropImageToSquare(file);
+      }
+      data.settings.faviconImage = finalImage;
+      setSimplePreview(faviconPreview, finalImage);
+      setNotice(settingsNotice, "Favicon uploaded. Save settings to publish.");
+    } catch (error) {
+      setNotice(settingsNotice, error.message, "error");
+    }
+  });
+
+
+  entryPopupFileInput.addEventListener("change", async () => {
+    const file = entryPopupFileInput.files?.[0];
+    if (!file) return;
+
+    try {
+      let finalImage = "";
+      const isGif = file.type === "image/gif" || /\.gif$/i.test(file.name || "");
+      try {
+        finalImage = await uploadImageToStorage(file);
+      } catch {
+        finalImage = isGif ? await readFileAsDataUrl(file) : await autoCropImageToSquare(file);
+      }
+      data.settings.entryPopupImage = finalImage;
+      setSimplePreview(entryPopupPreview, finalImage);
+      setNotice(settingsNotice, isGif ? "GIF popup uploaded. Save settings to publish." : "Entry popup image uploaded. Save settings to publish.");
     } catch (error) {
       setNotice(settingsNotice, error.message, "error");
     }
@@ -465,6 +549,17 @@ async function bootstrapDashboardPage() {
   heroPrimaryCtaInput.value = data.settings.heroPrimaryCtaLabel || "";
   heroSecondaryCtaInput.value = data.settings.heroSecondaryCtaLabel || "";
   setHeroPreview(data.settings.heroBackgroundImage || "");
+  setSimplePreview(brandLogoPreview, data.settings.brandLogoImage || "");
+  setSimplePreview(faviconPreview, data.settings.faviconImage || "");
+  entryPopupEnabledInput.checked = !!data.settings.entryPopupEnabled;
+  entryPopupLinkInput.value = data.settings.entryPopupLink || "";
+  entryPopupStartInput.value = data.settings.entryPopupStartAt || "";
+  entryPopupEndInput.value = data.settings.entryPopupEndAt || "";
+  setSimplePreview(entryPopupPreview, data.settings.entryPopupImage || "");
+  broadcastEnabledInput.checked = !!data.settings.broadcastEnabled;
+  broadcastFlowInput.checked = data.settings.broadcastFlow !== false;
+  broadcastTextInput.value = data.settings.broadcastText || "";
+  broadcastSpeedInput.value = Number(data.settings.broadcastSpeedSeconds) || 22;
 
   settingsForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -489,6 +584,14 @@ async function bootstrapDashboardPage() {
     data.settings.heroSubtitle = heroSubtitleInput.value.trim();
     data.settings.heroPrimaryCtaLabel = heroPrimaryCtaInput.value.trim();
     data.settings.heroSecondaryCtaLabel = heroSecondaryCtaInput.value.trim();
+    data.settings.entryPopupEnabled = !!entryPopupEnabledInput.checked;
+    data.settings.entryPopupLink = entryPopupLinkInput.value.trim();
+    data.settings.entryPopupStartAt = entryPopupStartInput.value;
+    data.settings.entryPopupEndAt = entryPopupEndInput.value;
+    data.settings.broadcastEnabled = !!broadcastEnabledInput.checked;
+    data.settings.broadcastFlow = !!broadcastFlowInput.checked;
+    data.settings.broadcastText = broadcastTextInput.value.trim();
+    data.settings.broadcastSpeedSeconds = Math.min(80, Math.max(8, Number(broadcastSpeedInput.value) || 22));
     await saveData(data);
     applyThemeSettings(data.settings);
     setNotice(settingsNotice, "Settings saved.");

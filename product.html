@@ -4,12 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TOP SEAL | Product Details</title>
+  <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="assets/top-seal-favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="page-loading-overlay" class="page-loading-overlay">
+    <div class="page-loading-card"><div class="page-loading-spinner" aria-hidden="true"></div><p>Loading store…</p></div>
+  </div>
   <div class="top-nav" id="top-nav">
     <div class="container top-nav-inner">
-      <a class="top-nav-brand" href="index.html">TOP SEAL</a>
+      <a class="top-nav-brand" id="top-nav-brand" href="index.html">
+        <img class="brand-logo" id="brand-logo" src="assets/top-seal-mark.svg" alt="TOP SEAL logo" />
+        <span class="brand-name" id="brand-name-label">TOP SEAL</span>
+      </a>
       <button class="top-nav-toggle" id="top-nav-toggle" type="button" aria-expanded="false" aria-controls="top-nav-links">Menu</button>
       <form class="top-nav-search" id="top-nav-search" role="search">
         <input id="top-nav-search-input" type="search" placeholder="Search products..." aria-label="Search products" />
@@ -17,10 +24,20 @@
       </form>
       <nav class="top-nav-links" id="top-nav-links" aria-label="Primary">
         <a href="index.html">Home</a>
-        <a href="index.html">Categories</a>
-        <a href="#footer-whatsapp">Contact</a>
+        <div class="nav-dropdown" id="category-dropdown">
+          <a href="index.html#category-featured-sections" class="nav-dropdown-trigger">Categories</a>
+          <div class="nav-dropdown-menu" id="category-dropdown-menu" role="menu" aria-label="Category quick links"></div>
+        </div>
+        <div class="nav-dropdown" id="subcategory-dropdown">
+          <a href="index.html#footer-subcategories" class="nav-dropdown-trigger">Sub-Categories</a>
+          <div class="nav-dropdown-menu" id="subcategory-dropdown-menu" role="menu" aria-label="Sub-category quick links"></div>
+        </div>
+        <a href="contact.html">Contact</a>
       </nav>
     </div>
+  </div>
+  <div class="broadcast-bar hidden" id="broadcast-bar" aria-live="polite">
+    <div class="broadcast-track"><span id="broadcast-text">Announcement</span></div>
   </div>
   <header class="site-header compact">
     <div class="container">
@@ -31,6 +48,10 @@
   </header>
 
   <main class="container">
+    <section id="product-slider-wrap" class="slider-wrap hidden">
+      <div class="slider" id="product-slider"></div>
+    </section>
+
     <article class="product-checkout" id="product-detail">
       <div id="product-image-wrap"></div>
       <div>
@@ -85,8 +106,12 @@
   <script src="shop-data.js"></script>
   <script>
     (async () => {
+    setupPageLoadingScreen();
+    try {
     const data = await loadTopSealData();
     applyStoreTheme(data.settings || {});
+    setupBroadcastBar(data.settings || {});
+    const popupReady = setupEntryPopup(data.settings || {});
     const params = new URLSearchParams(window.location.search);
     const itemKey = params.get("item");
     const item = data.products.find((product) => product.slug === itemKey);
@@ -133,6 +158,23 @@
       socialContainer.appendChild(a);
     });
 
+
+    document.getElementById("brand-name-label").textContent = brandName;
+    const logoEl = document.getElementById("brand-logo");
+    logoEl.src = data.settings?.brandLogoImage || "assets/top-seal-mark.svg";
+    const dynamicFavicon = document.getElementById("dynamic-favicon");
+    dynamicFavicon.href = data.settings?.faviconImage || "assets/top-seal-favicon.svg";
+
+    const categoryDropdownMenu = document.getElementById("category-dropdown-menu");
+    setupSubcategoryDropdown(data);
+    data.categories.forEach((catItem) => {
+      const itemLink = document.createElement("a");
+      itemLink.href = `category.html?cat=${catItem.slug}`;
+      itemLink.textContent = catItem.label;
+      itemLink.setAttribute("role", "menuitem");
+      categoryDropdownMenu.appendChild(itemLink);
+    });
+
     const footerSub = document.getElementById("footer-subcategories");
     const subLinks = [];
     data.categories.forEach((cat) => cat.subcategories.forEach((sub) => {
@@ -142,10 +184,114 @@
       a.textContent = sub.label;
       subLinks.push(a);
     }));
-    subLinks.forEach((a, idx) => {
-      footerSub.appendChild(a);
-      if (idx < subLinks.length - 1) footerSub.append(", ");
+    subLinks.forEach((a) => {
+      const row = document.createElement("span");
+      row.className = "footer-subcategory-row";
+      row.appendChild(a);
+      footerSub.appendChild(row);
     });
+
+
+    function setupPageSlider(images, containerId, wrapId, altLabel) {
+      if (!images || !images.length) return;
+      const wrap = document.getElementById(wrapId);
+      const slider = document.getElementById(containerId);
+      wrap.classList.remove("hidden");
+      slider.innerHTML = "";
+
+      const intervalMs = Math.min(10000, Math.max(2000, Number(data.settings?.slideIntervalMs) || 3200));
+      const viewport = document.createElement("div");
+      viewport.className = "smooth-slider";
+      const track = document.createElement("div");
+      track.className = "smooth-slider-track";
+
+      const deck = [images[images.length - 1], ...images, images[0]];
+      deck.forEach((src, idx) => {
+        const img = document.createElement("img");
+        img.className = "smooth-slide-image";
+        img.alt = `${altLabel} ${idx + 1}`;
+        const v = buildImageVariantSet(src);
+        img.src = v.large;
+        img.srcset = `${v.small} 420w, ${v.medium} 820w, ${v.large} 1280w`;
+        img.sizes = "100vw";
+        img.decoding = "async";
+        track.appendChild(img);
+      });
+
+      viewport.appendChild(track);
+      slider.appendChild(viewport);
+
+      const prevBtn = document.createElement("button");
+      prevBtn.type = "button";
+      prevBtn.className = "slider-arrow slider-arrow-prev";
+      prevBtn.setAttribute("aria-label", "Previous slide");
+      prevBtn.textContent = "‹";
+      const nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = "slider-arrow slider-arrow-next";
+      nextBtn.setAttribute("aria-label", "Next slide");
+      nextBtn.textContent = "›";
+      slider.append(prevBtn, nextBtn);
+
+      const dots = document.createElement("div");
+      dots.className = "slider-dots";
+      images.forEach((_, i) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "slider-dot" + (i === 0 ? " active" : "");
+        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+        dot.addEventListener("click", () => goTo(i + 1));
+        dots.appendChild(dot);
+      });
+      slider.appendChild(dots);
+
+      let index = 1;
+      let timer = null;
+      let isAnimating = false;
+      function renderDots() {
+        dots.querySelectorAll(".slider-dot").forEach((dot, i) => dot.classList.toggle("active", i === (index - 1 + images.length) % images.length));
+      }
+      function move(animate = true) {
+        if (!animate) {
+          const previousTransition = track.style.transition;
+          track.style.transition = "none";
+          track.style.transform = `translate3d(-${index * 100}%, 0, 0)`;
+          void track.offsetWidth;
+          track.style.transition = previousTransition;
+        } else {
+          track.style.transform = `translate3d(-${index * 100}%, 0, 0)`;
+        }
+        renderDots();
+      }
+      function goTo(next) {
+        if (isAnimating) return;
+        isAnimating = true;
+        index = next;
+        move(true);
+      }
+      track.addEventListener("transitionend", () => {
+        isAnimating = false;
+        if (index === 0) {
+          index = images.length;
+          move(false);
+        } else if (index === images.length + 1) {
+          index = 1;
+          move(false);
+        }
+      });
+      function startAuto() { stopAuto(); timer = setInterval(() => goTo(index + 1), intervalMs); }
+      function stopAuto() { if (timer) clearInterval(timer); timer = null; }
+      prevBtn.addEventListener("click", () => goTo(index - 1));
+      nextBtn.addEventListener("click", () => goTo(index + 1));
+      slider.addEventListener("mouseenter", stopAuto);
+      slider.addEventListener("mouseleave", startAuto);
+      slider.addEventListener("focusin", stopAuto);
+      slider.addEventListener("focusout", startAuto);
+      move(false);
+      startAuto();
+    }
+
+    setupPageSlider(data.homeSlides || [], "product-slider", "product-slider-wrap", "Product page slideshow image");
 
     const productName = document.getElementById("product-name");
     const productPrice = document.getElementById("product-price");
@@ -235,17 +381,7 @@
       buyButton.rel = "noopener noreferrer";
     }
 
-    const searchForm = document.getElementById("top-nav-search");
-    const searchInput = document.getElementById("top-nav-search-input");
-    searchForm?.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const query = (searchInput?.value || "").trim().toLowerCase();
-      if (!query) return;
-      const match = (data.products || []).find((p) => p.name.toLowerCase().includes(query) || p.slug.includes(query.replace(/\s+/g, "-")));
-      if (match) {
-        window.location.href = `product.html?item=${match.slug}`;
-      }
-    });
+    setupTopNavSearch(data);
 
     const navToggle = document.getElementById("top-nav-toggle");
     const topNav = document.getElementById("top-nav");
@@ -261,6 +397,10 @@
         topNav.classList.remove("open");
       });
     });
+    await popupReady;
+    } finally {
+      hidePageLoadingScreen();
+    }
     })();
   </script>
 </body>
