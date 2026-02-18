@@ -100,12 +100,65 @@
           <input id="hero-secondary-cta" placeholder="Order on WhatsApp" />
         </div>
         <div>
+          <label for="brand-logo-file">Brand Logo (sticky header)</label>
+          <input id="brand-logo-file" type="file" accept="image/*" />
+          <p class="small muted">Upload the logo shown in the top sticky panel.</p>
+        </div>
+        <div>
+          <img id="brand-logo-preview" class="product-preview hidden" alt="Brand logo preview" />
+        </div>
+        <div>
+          <label for="favicon-file">Favicon</label>
+          <input id="favicon-file" type="file" accept="image/*" />
+          <p class="small muted">Small browser tab icon.</p>
+        </div>
+        <div>
+          <img id="favicon-preview" class="product-preview hidden" alt="Favicon preview" />
+        </div>
+        <div>
           <label for="hero-bg-file">Hero Background Image</label>
           <input id="hero-bg-file" type="file" accept="image/*" />
           <p class="small muted">Optional image for premium hero banner background.</p>
         </div>
         <div>
           <img id="hero-bg-preview" class="product-preview hidden" alt="Hero background preview" />
+        </div>
+        <div>
+          <label><input id="entry-popup-enabled" type="checkbox" /> Enable Entry Event Popup</label>
+        </div>
+        <div>
+          <label for="entry-popup-link">Entry Popup Click Link</label>
+          <input id="entry-popup-link" placeholder="https://example.com/event" />
+        </div>
+        <div>
+          <label for="entry-popup-start">Entry Popup Start</label>
+          <input id="entry-popup-start" type="datetime-local" />
+        </div>
+        <div>
+          <label for="entry-popup-end">Entry Popup End</label>
+          <input id="entry-popup-end" type="datetime-local" />
+        </div>
+        <div>
+          <label for="entry-popup-file">Entry Popup Image</label>
+          <input id="entry-popup-file" type="file" accept="image/*" />
+          <p class="small muted">Shown once per session when entering from outside.</p>
+        </div>
+        <div>
+          <img id="entry-popup-preview" class="product-preview hidden" alt="Entry popup preview" />
+        </div>
+        <div>
+          <label><input id="broadcast-enabled" type="checkbox" /> Enable Sticky Broadcast Bar</label>
+        </div>
+        <div>
+          <label><input id="broadcast-flow" type="checkbox" /> Broadcast Flow Animation</label>
+        </div>
+        <div style="grid-column:1/-1;">
+          <label for="broadcast-text">Broadcast Message</label>
+          <input id="broadcast-text" placeholder="Important announcement..." />
+        </div>
+        <div>
+          <label for="broadcast-speed">Broadcast Speed (seconds)</label>
+          <input id="broadcast-speed" type="number" min="8" max="80" step="1" />
         </div>
         <div class="inline-actions" style="align-items:end; grid-column:1/-1;">
           <button type="submit">Save Settings</button>
