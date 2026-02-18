@@ -174,6 +174,10 @@ async function bootstrapDashboardPage() {
   const heroSecondaryCtaInput = document.getElementById("hero-secondary-cta");
   const heroBgFileInput = document.getElementById("hero-bg-file");
   const heroBgPreview = document.getElementById("hero-bg-preview");
+  const brandLogoFileInput = document.getElementById("brand-logo-file");
+  const brandLogoPreview = document.getElementById("brand-logo-preview");
+  const faviconFileInput = document.getElementById("favicon-file");
+  const faviconPreview = document.getElementById("favicon-preview");
 
   const categoriesList = document.getElementById("categories-list");
   const subcategoriesList = document.getElementById("subcategories-list");
@@ -233,6 +237,16 @@ async function bootstrapDashboardPage() {
     heroBgPreview.classList.remove("hidden");
   }
 
+  function setSimplePreview(el, imageData) {
+    if (!imageData) {
+      el.removeAttribute("src");
+      el.classList.add("hidden");
+      return;
+    }
+    el.src = imageData;
+    el.classList.remove("hidden");
+  }
+
   function getSelectedBadges() {
     return [
       badgeNewInput.checked ? "new" : "",
@@ -263,6 +277,45 @@ async function bootstrapDashboardPage() {
       data.settings.heroBackgroundImage = finalImage;
       setHeroPreview(finalImage);
       setNotice(settingsNotice, "Hero background uploaded. Save settings to publish.");
+    } catch (error) {
+      setNotice(settingsNotice, error.message, "error");
+    }
+  });
+
+
+  brandLogoFileInput.addEventListener("change", async () => {
+    const file = brandLogoFileInput.files?.[0];
+    if (!file) return;
+
+    try {
+      let finalImage = "";
+      try {
+        finalImage = await uploadImageToStorage(file);
+      } catch {
+        finalImage = await autoCropImageToSquare(file);
+      }
+      data.settings.brandLogoImage = finalImage;
+      setSimplePreview(brandLogoPreview, finalImage);
+      setNotice(settingsNotice, "Brand logo uploaded. Save settings to publish.");
+    } catch (error) {
+      setNotice(settingsNotice, error.message, "error");
+    }
+  });
+
+  faviconFileInput.addEventListener("change", async () => {
+    const file = faviconFileInput.files?.[0];
+    if (!file) return;
+
+    try {
+      let finalImage = "";
+      try {
+        finalImage = await uploadImageToStorage(file);
+      } catch {
+        finalImage = await autoCropImageToSquare(file);
+      }
+      data.settings.faviconImage = finalImage;
+      setSimplePreview(faviconPreview, finalImage);
+      setNotice(settingsNotice, "Favicon uploaded. Save settings to publish.");
     } catch (error) {
       setNotice(settingsNotice, error.message, "error");
     }
@@ -465,6 +518,8 @@ async function bootstrapDashboardPage() {
   heroPrimaryCtaInput.value = data.settings.heroPrimaryCtaLabel || "";
   heroSecondaryCtaInput.value = data.settings.heroSecondaryCtaLabel || "";
   setHeroPreview(data.settings.heroBackgroundImage || "");
+  setSimplePreview(brandLogoPreview, data.settings.brandLogoImage || "");
+  setSimplePreview(faviconPreview, data.settings.faviconImage || "");
 
   settingsForm.addEventListener("submit", async (event) => {
     event.preventDefault();
