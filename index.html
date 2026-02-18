@@ -4,12 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TOP SEAL | Categories</title>
+  <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="assets/top-seal-favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="page-loading-overlay" class="page-loading-overlay">
+    <div class="page-loading-card"><div class="page-loading-spinner" aria-hidden="true"></div><p>Loading store…</p></div>
+  </div>
   <div class="top-nav" id="top-nav">
     <div class="container top-nav-inner">
-      <a class="top-nav-brand" href="index.html">TOP SEAL</a>
+      <a class="top-nav-brand" id="top-nav-brand" href="index.html">
+        <img class="brand-logo" id="brand-logo" src="assets/top-seal-mark.svg" alt="TOP SEAL logo" />
+        <span class="brand-name" id="brand-name-label">TOP SEAL</span>
+      </a>
       <button class="top-nav-toggle" id="top-nav-toggle" type="button" aria-expanded="false" aria-controls="top-nav-links">Menu</button>
       <form class="top-nav-search" id="top-nav-search" role="search">
         <input id="top-nav-search-input" type="search" placeholder="Search products..." aria-label="Search products" />
@@ -17,10 +24,20 @@
       </form>
       <nav class="top-nav-links" id="top-nav-links" aria-label="Primary">
         <a href="index.html">Home</a>
-        <a href="#main-category-nav">Categories</a>
-        <a href="#footer-whatsapp">Contact</a>
+        <div class="nav-dropdown" id="category-dropdown">
+          <a href="#category-featured-sections" class="nav-dropdown-trigger">Categories</a>
+          <div class="nav-dropdown-menu" id="category-dropdown-menu" role="menu" aria-label="Category quick links"></div>
+        </div>
+        <div class="nav-dropdown" id="subcategory-dropdown">
+          <a href="index.html#footer-subcategories" class="nav-dropdown-trigger">Sub-Categories</a>
+          <div class="nav-dropdown-menu" id="subcategory-dropdown-menu" role="menu" aria-label="Sub-category quick links"></div>
+        </div>
+        <a href="contact.html">Contact</a>
       </nav>
     </div>
+  </div>
+  <div class="broadcast-bar hidden" id="broadcast-bar" aria-live="polite">
+    <div class="broadcast-track"><span id="broadcast-text">Announcement</span></div>
   </div>
   <header class="site-header" id="hero-header">
     <div class="container">
@@ -28,7 +45,7 @@
       <h1 id="hero-title">TOP SEAL</h1>
       <p class="intro" id="hero-subtitle">Choose a main category to explore products.</p>
       <div class="hero-actions">
-        <a id="hero-primary-cta" class="hero-btn primary" href="#main-category-nav">Browse Categories</a>
+        <a id="hero-primary-cta" class="hero-btn primary" href="#category-featured-sections">Browse Categories</a>
         <a id="hero-secondary-cta" class="hero-btn ghost" href="#" target="_blank" rel="noopener noreferrer">Order on WhatsApp</a>
       </div>
     </div>
@@ -40,16 +57,7 @@
     </section>
 
 
-    <section id="featured-products-wrap" class="hidden">
-      <h2>Featured Products</h2>
-      <p class="section-note">Top Selling</p>
-      <div id="featured-products-list" class="products-grid"></div>
-    </section>
-    <section>
-      <h2>Main Categories</h2>
-      <p class="section-note">Select a category to continue.</p>
-      <nav class="mother-category-list" aria-label="Main product categories" id="main-category-nav"></nav>
-    </section>
+    <section id="category-featured-sections" class="category-featured-sections"></section>
   </main>
 
   <footer class="site-footer">
@@ -79,8 +87,12 @@
   <script src="shop-data.js"></script>
   <script>
     (async () => {
+    setupPageLoadingScreen();
+    try {
     const data = await loadTopSealData();
     applyStoreTheme(data.settings || {});
+    setupBroadcastBar(data.settings || {});
+    const popupReady = setupEntryPopup(data.settings || {});
     const brandName = data.settings?.brandName || "TOP SEAL";
     const whatsapp = data.settings?.whatsappNumber || "8801894527991";
     const heroEyebrow = data.settings?.heroEyebrow || "Trusted Industrial Supply Partner";
@@ -144,14 +156,6 @@
       heroHeader.style.removeProperty("--hero-image");
     }
 
-    const nav = document.getElementById("main-category-nav");
-    data.categories.forEach((cat) => {
-      const a = document.createElement("a");
-      a.className = "mother-category-item";
-      a.href = `category.html?cat=${cat.slug}`;
-      a.textContent = cat.label;
-      nav.appendChild(a);
-    });
 
     const footerSub = document.getElementById("footer-subcategories");
     const subLinks = [];
@@ -164,9 +168,11 @@
         subLinks.push(a);
       });
     });
-    subLinks.forEach((a, idx) => {
-      footerSub.appendChild(a);
-      if (idx < subLinks.length - 1) footerSub.append(", ");
+    subLinks.forEach((a) => {
+      const row = document.createElement("span");
+      row.className = "footer-subcategory-row";
+      row.appendChild(a);
+      footerSub.appendChild(row);
     });
 
     function setupSlider(images, containerId, wrapId) {
@@ -177,21 +183,40 @@
       slider.innerHTML = "";
 
       const intervalMs = Math.min(10000, Math.max(2000, Number(data.settings?.slideIntervalMs) || 3200));
-      let index = 0;
-
       const viewport = document.createElement("div");
-      viewport.className = "showcase-slider";
+      viewport.className = "smooth-slider";
+      const track = document.createElement("div");
+      track.className = "smooth-slider-track";
+
+      const deck = [images[images.length - 1], ...images, images[0]];
+      deck.forEach((src, idx) => {
+        const img = document.createElement("img");
+        img.className = "smooth-slide-image";
+        img.alt = `Homepage slideshow image ${idx + 1}`;
+        const v = buildImageVariantSet(src);
+        img.src = v.large;
+        img.srcset = `${v.small} 420w, ${v.medium} 820w, ${v.large} 1280w`;
+        img.sizes = "100vw";
+        img.decoding = "async";
+        track.appendChild(img);
+      });
+
+      viewport.appendChild(track);
       slider.appendChild(viewport);
 
-      const left = document.createElement("img");
-      const center = document.createElement("img");
-      const right = document.createElement("img");
-      [left, center, right].forEach((img, i) => {
-        img.className = `showcase-image ${i === 0 ? "left" : i === 1 ? "center" : "right"}`;
-        img.alt = "Homepage slideshow image";
-        img.decoding = "async";
-      });
-      viewport.append(left, center, right);
+      const prevBtn = document.createElement("button");
+      prevBtn.type = "button";
+      prevBtn.className = "slider-arrow slider-arrow-prev";
+      prevBtn.setAttribute("aria-label", "Previous slide");
+      prevBtn.textContent = "‹";
+
+      const nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = "slider-arrow slider-arrow-next";
+      nextBtn.setAttribute("aria-label", "Next slide");
+      nextBtn.textContent = "›";
+
+      slider.append(prevBtn, nextBtn);
 
       const dots = document.createElement("div");
       dots.className = "slider-dots";
@@ -200,69 +225,145 @@
         dot.type = "button";
         dot.className = "slider-dot" + (i === 0 ? " active" : "");
         dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
-        dot.addEventListener("click", () => setSlide(i));
+        dot.addEventListener("click", () => goTo(i + 1));
         dots.appendChild(dot);
       });
       slider.appendChild(dots);
 
-      function setResponsive(imgEl, src) {
-        const v = buildImageVariantSet(src);
-        imgEl.src = v.large;
-        imgEl.srcset = `${v.small} 420w, ${v.medium} 820w, ${v.large} 1280w`;
-        imgEl.sizes = "(max-width: 700px) 100vw, 60vw";
+      let index = 1;
+      let timer = null;
+      let isAnimating = false;
+
+      function renderDots() {
+        dots.querySelectorAll(".slider-dot").forEach((dot, i) => dot.classList.toggle("active", i === (index - 1 + images.length) % images.length));
       }
 
-      function renderTriplet() {
-        const leftIndex = (index - 1 + images.length) % images.length;
-        const rightIndex = (index + 1) % images.length;
-        setResponsive(left, images[leftIndex]);
-        setResponsive(center, images[index]);
-        setResponsive(right, images[rightIndex]);
-        dots.querySelectorAll(".slider-dot").forEach((dot, i) => dot.classList.toggle("active", i === index));
+      function move(animate = true) {
+        if (!animate) {
+          const previousTransition = track.style.transition;
+          track.style.transition = "none";
+          track.style.transform = `translate3d(-${index * 100}%, 0, 0)`;
+          void track.offsetWidth;
+          track.style.transition = previousTransition;
+        } else {
+          track.style.transform = `translate3d(-${index * 100}%, 0, 0)`;
+        }
+        renderDots();
       }
 
-      function setSlide(nextIndex) {
-        index = (nextIndex + images.length) % images.length;
-        viewport.classList.add("is-switching");
-        setTimeout(() => {
-          renderTriplet();
-          viewport.classList.remove("is-switching");
-        }, 220);
+      function goTo(next) {
+        if (isAnimating) return;
+        isAnimating = true;
+        index = next;
+        move(true);
       }
 
-      renderTriplet();
-      setInterval(() => setSlide(index + 1), intervalMs);
+      track.addEventListener("transitionend", () => {
+        isAnimating = false;
+        if (index === 0) {
+          index = images.length;
+          move(false);
+        } else if (index === images.length + 1) {
+          index = 1;
+          move(false);
+        }
+      });
+
+      function startAuto() {
+        stopAuto();
+        timer = setInterval(() => goTo(index + 1), intervalMs);
+      }
+      function stopAuto() {
+        if (timer) clearInterval(timer);
+        timer = null;
+      }
+
+      prevBtn.addEventListener("click", () => goTo(index - 1));
+      nextBtn.addEventListener("click", () => goTo(index + 1));
+      slider.addEventListener("mouseenter", stopAuto);
+      slider.addEventListener("mouseleave", startAuto);
+      slider.addEventListener("focusin", stopAuto);
+      slider.addEventListener("focusout", startAuto);
+
+      move(false);
+      startAuto();
     }
 
     setupSlider(data.homeSlides || [], "home-slider", "home-slider-wrap");
 
-    const featuredWrap = document.getElementById("featured-products-wrap");
-    const featuredList = document.getElementById("featured-products-list");
+    const categoryFeaturedSections = document.getElementById("category-featured-sections");
     const featuredProducts = (data.products || []).filter((p) => p.featuredOnHome);
-    if (featuredProducts.length) {
-      featuredWrap.classList.remove("hidden");
-      featuredProducts.forEach((product) => {
-        const card = document.createElement("article");
-        card.className = "product-card";
-        const image = product.imageData
-          ? `<img src="${optimizeImageSource(product.imageData, { width: 520 })}" alt="${product.name}" class="product-card-image" loading="lazy" decoding="async" />`
-          : `<div class="product-card-placeholder">No Image</div>`;
-        card.innerHTML = `${image}<h3>${product.name}</h3><p class="product-card-price">৳ ${product.price || "Ask Price"}</p><a class="order-button" href="product.html?item=${product.slug}">Order</a>`;
-        featuredList.appendChild(card);
+    const featuredByCategory = new Map();
+
+    featuredProducts.forEach((product) => {
+      if (!featuredByCategory.has(product.categoryId)) {
+        featuredByCategory.set(product.categoryId, []);
+      }
+      featuredByCategory.get(product.categoryId).push(product);
+    });
+
+    const visibleCategories = (data.categories || []).filter((cat) => featuredByCategory.has(cat.id));
+
+    if (!visibleCategories.length) {
+      categoryFeaturedSections.innerHTML = '<section class="category-featured-block"><h2>No featured categories yet</h2><p class="section-note">Mark products as featured from the admin panel to show them here.</p></section>';
+    } else {
+      visibleCategories.forEach((category) => {
+        const section = document.createElement("section");
+        section.className = "category-featured-block";
+
+        const title = document.createElement("a");
+        title.className = "category-featured-title";
+        title.href = `category.html?cat=${category.slug}`;
+        title.textContent = category.label;
+
+        const note = document.createElement("p");
+        note.className = "section-note";
+        note.textContent = "Featured items";
+
+        const grid = document.createElement("div");
+        grid.className = "products-grid";
+
+        (featuredByCategory.get(category.id) || []).forEach((product) => {
+          const card = document.createElement("article");
+          card.className = "product-card";
+          const image = product.imageData
+            ? `<img src="${optimizeImageSource(product.imageData, { width: 520 })}" alt="${product.name}" class="product-card-image" loading="lazy" decoding="async" />`
+            : `<div class="product-card-placeholder">No Image</div>`;
+          const badges = getDisplayBadges(product);
+          const badgesHtml = badges.length
+            ? `<div class="product-badges">${badges.map((badge) => `<span class="product-badge">${badge}</span>`).join("")}</div>`
+            : "";
+          card.innerHTML = `${image}<h3>${product.name}</h3>${badgesHtml}<p class="product-card-price">৳ ${product.price || "Ask Price"}</p><a class="order-button" href="product.html?item=${product.slug}">Order</a>`;
+          grid.appendChild(card);
+        });
+
+        section.append(title, note, grid);
+        categoryFeaturedSections.appendChild(section);
       });
     }
 
-    const searchForm = document.getElementById("top-nav-search");
-    const searchInput = document.getElementById("top-nav-search-input");
-    searchForm?.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const query = (searchInput?.value || "").trim().toLowerCase();
-      if (!query) return;
-      const match = (data.products || []).find((p) => p.name.toLowerCase().includes(query) || p.slug.includes(query.replace(/\s+/g, "-")));
-      if (match) {
-        window.location.href = `product.html?item=${match.slug}`;
-      }
+
+    document.getElementById("brand-name-label").textContent = brandName;
+    const logoEl = document.getElementById("brand-logo");
+    const logoSrc = data.settings?.brandLogoImage || "assets/top-seal-mark.svg";
+    logoEl.src = logoSrc;
+    logoEl.classList.toggle("is-custom", Boolean(data.settings?.brandLogoImage));
+
+    const dynamicFavicon = document.getElementById("dynamic-favicon");
+    dynamicFavicon.href = data.settings?.faviconImage || "assets/top-seal-favicon.svg";
+
+    const categoryDropdownMenu = document.getElementById("category-dropdown-menu");
+    setupSubcategoryDropdown(data);
+    appendSubcategoriesIntoCategoryMenu(data);
+    data.categories.forEach((cat) => {
+      const item = document.createElement("a");
+      item.href = `category.html?cat=${cat.slug}`;
+      item.textContent = cat.label;
+      item.setAttribute("role", "menuitem");
+      categoryDropdownMenu.appendChild(item);
     });
+
+    setupTopNavSearch(data);
 
     const navToggle = document.getElementById("top-nav-toggle");
     const topNav = document.getElementById("top-nav");
@@ -278,6 +379,10 @@
         topNav.classList.remove("open");
       });
     });
+    await popupReady;
+    } finally {
+      hidePageLoadingScreen();
+    }
     })();
   </script>
 </body>
