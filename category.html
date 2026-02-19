@@ -94,6 +94,7 @@
     applyStoreTheme(data.settings || {});
     setupBroadcastBar(data.settings || {});
     const popupReady = setupEntryPopup(data.settings || {});
+    setupSideAds(data.settings || {});
     const params = new URLSearchParams(window.location.search);
     const catSlug = params.get("cat");
     const selectedSubSlugFromUrl = params.get("sub");
@@ -148,7 +149,6 @@
 
     const categoryDropdownMenu = document.getElementById("category-dropdown-menu");
     setupSubcategoryDropdown(data);
-    appendSubcategoriesIntoCategoryMenu(data);
     data.categories.forEach((catItem) => {
       const item = document.createElement("a");
       item.href = `category.html?cat=${catItem.slug}`;
@@ -334,7 +334,7 @@
           <h3>${product.name}</h3>
           ${buildBadges(product)}
           <p class="product-card-price">৳ ${product.price || "Ask Price"}</p>
-          <a class="order-button" href="product.html?item=${product.slug}">Order</a>
+          <a class="order-button" href="product.html?item=${product.slug}"><span class="button-whatsapp-icon" aria-hidden="true"></span>Order</a>
         `;
 
         productsList.appendChild(card);

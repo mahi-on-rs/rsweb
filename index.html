@@ -57,6 +57,7 @@
     </section>
 
 
+    <section id="home-display-section" class="home-display-section hidden"></section>
     <section id="category-featured-sections" class="category-featured-sections"></section>
   </main>
 
@@ -93,6 +94,7 @@
     applyStoreTheme(data.settings || {});
     setupBroadcastBar(data.settings || {});
     const popupReady = setupEntryPopup(data.settings || {});
+    setupSideAds(data.settings || {});
     const brandName = data.settings?.brandName || "TOP SEAL";
     const whatsapp = data.settings?.whatsappNumber || "8801894527991";
     const heroEyebrow = data.settings?.heroEyebrow || "Trusted Industrial Supply Partner";
@@ -291,6 +293,32 @@
 
     setupSlider(data.homeSlides || [], "home-slider", "home-slider-wrap");
 
+    const homeDisplaySection = document.getElementById("home-display-section");
+    const displayItems = (data.homeDisplayItems || []).filter((item) => item.imageData && (item.title || item.description));
+    if (displayItems.length) {
+      homeDisplaySection.classList.remove("hidden");
+      const displayTitle = document.createElement("h2");
+      displayTitle.className = "display-showcase-title";
+      displayTitle.textContent = 'Product Showcase';
+
+      const displayGrid = document.createElement("div");
+      displayGrid.className = "display-showcase-grid";
+      displayItems.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "display-showcase-card";
+        card.innerHTML = `
+          <img src="${optimizeImageSource(item.imageData, { width: 980 })}" alt="${item.title || "Display image"}" class="display-showcase-image" loading="lazy" decoding="async" />
+          <div class="display-showcase-overlay">
+            <p class="display-showcase-heading">${item.title || ""}</p>
+            <p class="display-showcase-copy">${item.description || ""}</p>
+          </div>
+        `;
+        displayGrid.appendChild(card);
+      });
+
+      homeDisplaySection.append(displayTitle, displayGrid);
+    }
+
     const categoryFeaturedSections = document.getElementById("category-featured-sections");
     const featuredProducts = (data.products || []).filter((p) => p.featuredOnHome);
     const featuredByCategory = new Map();
@@ -314,11 +342,11 @@
         const title = document.createElement("a");
         title.className = "category-featured-title";
         title.href = `category.html?cat=${category.slug}`;
-        title.textContent = category.label;
+        title.innerHTML = `<span class="category-icon" aria-hidden="true"></span><span>${category.label}</span>`;
 
         const note = document.createElement("p");
         note.className = "section-note";
-        note.textContent = "Featured items";
+        note.textContent = 'Featured items';
 
         const grid = document.createElement("div");
         grid.className = "products-grid";
@@ -333,7 +361,7 @@
           const badgesHtml = badges.length
             ? `<div class="product-badges">${badges.map((badge) => `<span class="product-badge">${badge}</span>`).join("")}</div>`
             : "";
-          card.innerHTML = `${image}<h3>${product.name}</h3>${badgesHtml}<p class="product-card-price">৳ ${product.price || "Ask Price"}</p><a class="order-button" href="product.html?item=${product.slug}">Order</a>`;
+          card.innerHTML = `${image}<h3>${product.name}</h3>${badgesHtml}<p class="product-card-price">৳ ${product.price || "Ask Price"}</p><a class="order-button" href="product.html?item=${product.slug}"><span class="button-whatsapp-icon" aria-hidden="true"></span>Order</a>`;
           grid.appendChild(card);
         });
 
@@ -354,7 +382,6 @@
 
     const categoryDropdownMenu = document.getElementById("category-dropdown-menu");
     setupSubcategoryDropdown(data);
-    appendSubcategoriesIntoCategoryMenu(data);
     data.categories.forEach((cat) => {
       const item = document.createElement("a");
       item.href = `category.html?cat=${cat.slug}`;

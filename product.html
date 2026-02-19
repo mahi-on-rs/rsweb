@@ -73,7 +73,7 @@
           <ul id="product-trust-points" class="trust-list"></ul>
         </section>
 
-        <a class="buy-button checkout-buy" id="buy-button" href="#">Order via WhatsApp</a>
+        <a class="buy-button checkout-buy" id="buy-button" href="#"><span class="button-whatsapp-icon" aria-hidden="true"></span>Order via WhatsApp</a>
         <p class="small-note">A product card message will be ready in WhatsApp.</p>
       </div>
     </article>
@@ -112,6 +112,7 @@
     applyStoreTheme(data.settings || {});
     setupBroadcastBar(data.settings || {});
     const popupReady = setupEntryPopup(data.settings || {});
+    setupSideAds(data.settings || {});
     const params = new URLSearchParams(window.location.search);
     const itemKey = params.get("item");
     const item = data.products.find((product) => product.slug === itemKey);
@@ -167,7 +168,6 @@
 
     const categoryDropdownMenu = document.getElementById("category-dropdown-menu");
     setupSubcategoryDropdown(data);
-    appendSubcategoriesIntoCategoryMenu(data);
     data.categories.forEach((catItem) => {
       const itemLink = document.createElement("a");
       itemLink.href = `category.html?cat=${catItem.slug}`;

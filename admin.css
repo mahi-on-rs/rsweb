@@ -109,6 +109,12 @@ button.secondary {
   border-color: var(--primary);
 }
 
+button.icon-btn {
+  min-width: 2rem;
+  padding-left: 0.45rem;
+  padding-right: 0.45rem;
+}
+
 button.danger { background: var(--danger); }
 
 button:hover {
@@ -215,6 +221,33 @@ th, td {
 
 .hidden { display: none; }
 
+
+.display-items-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.display-item-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.5rem;
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.display-thumb-placeholder {
+  display: grid;
+  place-items: center;
+  color: #6b7280;
+  font-size: 0.78rem;
+  background: #f4f7fb;
+}
+
+
 .slide-list {
   display: flex;
   flex-wrap: wrap;
@@ -250,6 +283,10 @@ th, td {
 
 @media (max-width: 900px) {
   .grid-2 { grid-template-columns: 1fr; }
+
+  .display-item-card {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
