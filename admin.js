@@ -389,7 +389,7 @@ async function bootstrapDashboardPage() {
       try {
         finalImage = await uploadImageToStorage(file);
       } catch {
-        finalImage = await autoCropImageToSquare(file);
+        finalImage = await readFileAsDataUrl(file);
       }
       displayItemImageDataInput.value = finalImage;
       setDisplayPreview(finalImage);
