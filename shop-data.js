@@ -32,8 +32,10 @@ const TOPSEAL_DEFAULT_DATA = {
     youtubeUrl: "",
     mapLink: "",
     businessHours: "Saturday - Thursday: 9:00 AM - 8:00 PM\nFriday: Limited Support",
-    contactAddress: "Dhaka, Bangladesh"
+    contactAddress: "Dhaka, Bangladesh",
+    sideAds: []
   },
+  homeDisplayItems: [],
   homeSlides: [],
   categories: [
     {
@@ -290,6 +292,14 @@ function mergeWithDefaults(payload) {
     ...((payload && payload.settings) || {})
   };
 
+  if (!Array.isArray(merged.settings.sideAds)) merged.settings.sideAds = [];
+  merged.settings.sideAds = merged.settings.sideAds.map((item, index) => ({
+    id: item?.id || `side-ad-${index + 1}`,
+    side: item?.side === "right" ? "right" : "left",
+    imageData: item?.imageData || "",
+    link: item?.link || ""
+  })).filter((item) => item.imageData);
+
   if (!Array.isArray(merged.categories)) {
     merged.categories = structuredClone(TOPSEAL_DEFAULT_DATA.categories);
   }
@@ -309,6 +319,14 @@ function mergeWithDefaults(payload) {
   }));
 
   if (!Array.isArray(merged.homeSlides)) merged.homeSlides = [];
+  if (!Array.isArray(merged.homeDisplayItems)) merged.homeDisplayItems = [];
+  merged.homeDisplayItems = merged.homeDisplayItems.map((item, index) => ({
+    id: item?.id || `display-${index + 1}`,
+    title: item?.title || "",
+    description: item?.description || "",
+    imageData: item?.imageData || "",
+    link: item?.link || ""
+  }));
   return merged;
 }
 
@@ -631,6 +649,50 @@ function setupSubcategoryDropdown(data, menuId = "subcategory-dropdown-menu") {
   });
 }
 
+
+function setupSideAds(settings = {}) {
+  const existing = document.querySelectorAll('.side-ads-column');
+  existing.forEach((node) => node.remove());
+
+  const ads = Array.isArray(settings.sideAds) ? settings.sideAds.filter((item) => item?.imageData) : [];
+  if (!ads.length) return;
+
+  const leftItems = ads.filter((item) => item.side !== 'right');
+  const rightItems = ads.filter((item) => item.side === 'right');
+
+  function buildColumn(side, items) {
+    if (!items.length) return;
+    const column = document.createElement('aside');
+    column.className = `side-ads-column ${side}`;
+    column.setAttribute('aria-label', `${side} side ads`);
+
+    items.forEach((item) => {
+      const wrapper = document.createElement(item.link ? 'a' : 'div');
+      wrapper.className = 'side-ad-item';
+      if (item.link) {
+        wrapper.href = item.link;
+        wrapper.target = '_blank';
+        wrapper.rel = 'noopener noreferrer';
+      }
+
+      const img = document.createElement('img');
+      img.className = 'side-ad-image';
+      img.src = item.imageData;
+      img.alt = 'Promotional side advertisement';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      wrapper.appendChild(img);
+
+      column.appendChild(wrapper);
+    });
+
+    document.body.appendChild(column);
+  }
+
+  buildColumn('left', leftItems);
+  buildColumn('right', rightItems);
+}
+
 function setupBroadcastBar(settings = {}) {
   const bar = document.getElementById("broadcast-bar");
   const textEl = document.getElementById("broadcast-text");
@@ -741,7 +803,7 @@ function appendSubcategoriesIntoCategoryMenu(data, categoryMenuId = "category-dr
     (cat.subcategories || []).forEach((sub) => {
       const link = document.createElement("a");
       link.href = `category.html?cat=${cat.slug}&sub=${sub.slug}`;
-      link.textContent = `↳ ${sub.label}`;
+      link.textContent = `- ${sub.label}`;
       link.classList.add("nav-subcategory-item");
       link.setAttribute("role", "menuitem");
       menu.appendChild(link);

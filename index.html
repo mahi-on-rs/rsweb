@@ -57,6 +57,7 @@
     </section>
 
 
+    <section id="home-display-section" class="home-display-section hidden"></section>
     <section id="category-featured-sections" class="category-featured-sections"></section>
   </main>
 
@@ -93,6 +94,7 @@
     applyStoreTheme(data.settings || {});
     setupBroadcastBar(data.settings || {});
     const popupReady = setupEntryPopup(data.settings || {});
+    setupSideAds(data.settings || {});
     const brandName = data.settings?.brandName || "TOP SEAL";
     const whatsapp = data.settings?.whatsappNumber || "8801894527991";
     const heroEyebrow = data.settings?.heroEyebrow || "Trusted Industrial Supply Partner";
@@ -291,6 +293,31 @@
 
     setupSlider(data.homeSlides || [], "home-slider", "home-slider-wrap");
 
+    const homeDisplaySection = document.getElementById("home-display-section");
+    const displayItems = (data.homeDisplayItems || []).filter((item) => item.imageData && item.title);
+    if (displayItems.length) {
+      homeDisplaySection.classList.remove("hidden");
+      const displayGrid = document.createElement("div");
+      displayGrid.className = "display-showcase-grid";
+      displayItems.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "display-showcase-card reveal-up";
+
+        const mediaHtml = item.link
+          ? `<a class="display-showcase-link" href="${item.link}" target="_blank" rel="noopener noreferrer"><img src="${optimizeImageSource(item.imageData, { width: 1800 })}" alt="${item.title || "Display image"}" class="display-showcase-image" loading="lazy" decoding="async" /></a>`
+          : `<img src="${optimizeImageSource(item.imageData, { width: 1800 })}" alt="${item.title || "Display image"}" class="display-showcase-image" loading="lazy" decoding="async" />`;
+
+        card.innerHTML = `
+          <h2 class="display-showcase-heading">${item.title || ""}</h2>
+          ${item.description ? `<p class="display-showcase-copy">${item.description}</p>` : ""}
+          ${mediaHtml}
+        `;
+        displayGrid.appendChild(card);
+      });
+
+      homeDisplaySection.append(displayGrid);
+    }
+
     const categoryFeaturedSections = document.getElementById("category-featured-sections");
     const featuredProducts = (data.products || []).filter((p) => p.featuredOnHome);
     const featuredByCategory = new Map();
@@ -314,11 +341,7 @@
         const title = document.createElement("a");
         title.className = "category-featured-title";
         title.href = `category.html?cat=${category.slug}`;
-        title.textContent = category.label;
-
-        const note = document.createElement("p");
-        note.className = "section-note";
-        note.textContent = "Featured items";
+        title.innerHTML = `<span class="category-icon" aria-hidden="true"></span><span>${category.label}</span>`;
 
         const grid = document.createElement("div");
         grid.className = "products-grid";
@@ -333,11 +356,11 @@
           const badgesHtml = badges.length
             ? `<div class="product-badges">${badges.map((badge) => `<span class="product-badge">${badge}</span>`).join("")}</div>`
             : "";
-          card.innerHTML = `${image}<h3>${product.name}</h3>${badgesHtml}<p class="product-card-price">৳ ${product.price || "Ask Price"}</p><a class="order-button" href="product.html?item=${product.slug}">Order</a>`;
+          card.innerHTML = `${image}<h3>${product.name}</h3>${badgesHtml}<p class="product-card-price">৳ ${product.price || "Ask Price"}</p><a class="order-button" href="product.html?item=${product.slug}"><svg class="whatsapp-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M19.11 17.47c-.27-.13-1.58-.78-1.82-.87-.24-.09-.41-.13-.58.13-.17.27-.67.87-.82 1.04-.15.18-.3.2-.57.07-.27-.13-1.12-.41-2.13-1.3-.79-.7-1.32-1.56-1.47-1.82-.15-.27-.02-.41.11-.54.12-.12.27-.3.4-.45.13-.15.17-.27.27-.45.09-.18.04-.34-.02-.47-.07-.13-.58-1.4-.79-1.91-.21-.51-.42-.44-.58-.45l-.49-.01c-.17 0-.45.07-.68.34-.24.27-.89.87-.89 2.13 0 1.26.92 2.48 1.05 2.65.13.18 1.8 2.74 4.36 3.84 2.56 1.1 2.56.73 3.02.68.46-.04 1.58-.64 1.8-1.26.22-.63.22-1.16.15-1.27-.06-.11-.24-.18-.5-.31z"/><path d="M26.67 5.29A15.8 15.8 0 0 0 16 1C7.73 1 1 7.73 1 16c0 2.64.69 5.21 2 7.47L1 31l7.74-2.03A14.94 14.94 0 0 0 16 31c8.27 0 15-6.73 15-15 0-4-1.56-7.76-4.33-10.71zM16 28.2c-2.25 0-4.46-.6-6.4-1.74l-.46-.27-4.59 1.2 1.23-4.47-.3-.46A12.13 12.13 0 0 1 3.8 16C3.8 9.27 9.27 3.8 16 3.8c3.25 0 6.3 1.27 8.6 3.57A12.1 12.1 0 0 1 28.2 16c0 6.73-5.47 12.2-12.2 12.2z"/></svg>Order</a>`;
           grid.appendChild(card);
         });
 
-        section.append(title, note, grid);
+        section.append(title, grid);
         categoryFeaturedSections.appendChild(section);
       });
     }
@@ -354,7 +377,6 @@
 
     const categoryDropdownMenu = document.getElementById("category-dropdown-menu");
     setupSubcategoryDropdown(data);
-    appendSubcategoriesIntoCategoryMenu(data);
     data.categories.forEach((cat) => {
       const item = document.createElement("a");
       item.href = `category.html?cat=${cat.slug}`;
@@ -379,6 +401,14 @@
         topNav.classList.remove("open");
       });
     });
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) entry.target.classList.add("is-visible");
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll(".reveal-up, .category-featured-block").forEach((el) => observer.observe(el));
+
     await popupReady;
     } finally {
       hidePageLoadingScreen();
