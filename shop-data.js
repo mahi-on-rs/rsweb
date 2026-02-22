@@ -22,6 +22,8 @@ const TOPSEAL_DEFAULT_DATA = {
     broadcastText: "",
     broadcastFlow: true,
     broadcastSpeedSeconds: 22,
+    glowThreadsEnabled: true,
+    floatingWhatsappEnabled: true,
     secondaryColor: "#16324f",
     backgroundColor: "#f6f9fc",
     surfaceColor: "#ffffff",
@@ -32,8 +34,10 @@ const TOPSEAL_DEFAULT_DATA = {
     youtubeUrl: "",
     mapLink: "",
     businessHours: "Saturday - Thursday: 9:00 AM - 8:00 PM\nFriday: Limited Support",
-    contactAddress: "Dhaka, Bangladesh"
+    contactAddress: "Dhaka, Bangladesh",
+    sideAds: []
   },
+  homeDisplayItems: [],
   homeSlides: [],
   categories: [
     {
@@ -290,6 +294,17 @@ function mergeWithDefaults(payload) {
     ...((payload && payload.settings) || {})
   };
 
+  merged.settings.glowThreadsEnabled = merged.settings.glowThreadsEnabled !== false;
+  merged.settings.floatingWhatsappEnabled = merged.settings.floatingWhatsappEnabled !== false;
+
+  if (!Array.isArray(merged.settings.sideAds)) merged.settings.sideAds = [];
+  merged.settings.sideAds = merged.settings.sideAds.map((item, index) => ({
+    id: item?.id || `side-ad-${index + 1}`,
+    side: item?.side === "right" ? "right" : "left",
+    imageData: item?.imageData || "",
+    link: item?.link || ""
+  })).filter((item) => item.imageData);
+
   if (!Array.isArray(merged.categories)) {
     merged.categories = structuredClone(TOPSEAL_DEFAULT_DATA.categories);
   }
@@ -309,6 +324,14 @@ function mergeWithDefaults(payload) {
   }));
 
   if (!Array.isArray(merged.homeSlides)) merged.homeSlides = [];
+  if (!Array.isArray(merged.homeDisplayItems)) merged.homeDisplayItems = [];
+  merged.homeDisplayItems = merged.homeDisplayItems.map((item, index) => ({
+    id: item?.id || `display-${index + 1}`,
+    title: item?.title || "",
+    description: item?.description || "",
+    imageData: item?.imageData || "",
+    link: item?.link || ""
+  }));
   return merged;
 }
 
@@ -631,6 +654,103 @@ function setupSubcategoryDropdown(data, menuId = "subcategory-dropdown-menu") {
   });
 }
 
+
+function setupSideAds(settings = {}) {
+  const existing = document.querySelectorAll('.side-ads-column');
+  existing.forEach((node) => node.remove());
+
+  const ads = Array.isArray(settings.sideAds) ? settings.sideAds.filter((item) => item?.imageData) : [];
+  if (!ads.length) return;
+
+  const leftItems = ads.filter((item) => item.side !== 'right');
+  const rightItems = ads.filter((item) => item.side === 'right');
+
+  function buildColumn(side, items) {
+    if (!items.length) return;
+    const column = document.createElement('aside');
+    column.className = `side-ads-column ${side}`;
+    column.setAttribute('aria-label', `${side} side ads`);
+
+    items.forEach((item) => {
+      const wrapper = document.createElement(item.link ? 'a' : 'div');
+      wrapper.className = 'side-ad-item';
+      if (item.link) {
+        wrapper.href = item.link;
+        wrapper.target = '_blank';
+        wrapper.rel = 'noopener noreferrer';
+      }
+
+      const img = document.createElement('img');
+      img.className = 'side-ad-image';
+      img.src = item.imageData;
+      img.alt = 'Promotional side advertisement';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      wrapper.appendChild(img);
+
+      column.appendChild(wrapper);
+    });
+
+    document.body.appendChild(column);
+  }
+
+  buildColumn('left', leftItems);
+  buildColumn('right', rightItems);
+}
+
+
+function setupAmbientGlowThreads(settings = {}) {
+  const existing = document.getElementById("ambient-glow-threads");
+  if (existing) existing.remove();
+
+  if (settings.glowThreadsEnabled === false) return;
+
+  const shell = document.createElement("div");
+  shell.id = "ambient-glow-threads";
+  shell.className = "ambient-glow-threads";
+
+  ["left", "right"].forEach((side) => {
+    const lane = document.createElement("div");
+    lane.className = `glow-thread-lane ${side}`;
+
+    for (let i = 0; i < 4; i += 1) {
+      const thread = document.createElement("span");
+      thread.className = "glow-thread";
+      thread.style.setProperty("--thread-delay", `${(Math.random() * 8 + i * 1.1).toFixed(2)}s`);
+      thread.style.setProperty("--thread-duration", `${(9 + Math.random() * 5).toFixed(2)}s`);
+      thread.style.setProperty("--thread-offset", `${(Math.random() * 58 + 8).toFixed(2)}%`);
+      thread.style.setProperty("--thread-size", `${(80 + Math.random() * 150).toFixed(0)}px`);
+      lane.appendChild(thread);
+    }
+
+    shell.appendChild(lane);
+  });
+
+  document.body.appendChild(shell);
+}
+
+
+function setupFloatingWhatsApp(settings = {}) {
+  const existing = document.getElementById("floating-whatsapp-btn");
+  if (existing) existing.remove();
+
+  if (settings.floatingWhatsappEnabled === false) return;
+  const whatsappNumber = (settings.whatsappNumber || "").trim();
+  if (!whatsappNumber) return;
+  const brand = (settings.brandName || "Store").trim();
+
+  const button = document.createElement("a");
+  button.id = "floating-whatsapp-btn";
+  button.className = "floating-whatsapp-btn";
+  button.href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hello ${brand}`)}`;
+  button.target = "_blank";
+  button.rel = "noopener noreferrer";
+  button.setAttribute("aria-label", "Chat on WhatsApp");
+  button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="floating-whatsapp-icon bi bi-whatsapp" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/></svg><span>WhatsApp</span>`;
+
+  document.body.appendChild(button);
+}
+
 function setupBroadcastBar(settings = {}) {
   const bar = document.getElementById("broadcast-bar");
   const textEl = document.getElementById("broadcast-text");
@@ -741,7 +861,7 @@ function appendSubcategoriesIntoCategoryMenu(data, categoryMenuId = "category-dr
     (cat.subcategories || []).forEach((sub) => {
       const link = document.createElement("a");
       link.href = `category.html?cat=${cat.slug}&sub=${sub.slug}`;
-      link.textContent = `↳ ${sub.label}`;
+      link.textContent = `- ${sub.label}`;
       link.classList.add("nav-subcategory-item");
       link.setAttribute("role", "menuitem");
       menu.appendChild(link);

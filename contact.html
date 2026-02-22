@@ -100,8 +100,12 @@
     applyStoreTheme(data.settings || {});
     setupBroadcastBar(data.settings || {});
     const popupReady = setupEntryPopup(data.settings || {});
+    setupSideAds(data.settings || {});
+    setupAmbientGlowThreads(data.settings || {});
+    setupFloatingWhatsApp(data.settings || {});
 
     const brandName = data.settings?.brandName || "TOP SEAL";
+    document.title = `${brandName} | Contact`;
     const whatsapp = data.settings?.whatsappNumber || "8801894527991";
 
     document.getElementById("brand-name-label").textContent = brandName;
@@ -284,7 +288,6 @@
 
     const categoryDropdownMenu = document.getElementById("category-dropdown-menu");
     setupSubcategoryDropdown(data);
-    appendSubcategoriesIntoCategoryMenu(data);
     data.categories.forEach((catItem) => {
       const item = document.createElement("a");
       item.href = `category.html?cat=${catItem.slug}`;
