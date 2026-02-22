@@ -105,6 +105,16 @@ async function bootstrapLoginPage() {
   const loginForm = document.getElementById("login-form");
   if (!loginForm) return;
 
+  try {
+    const data = await loadData();
+    const brand = data.settings?.brandName || "TOP SEAL";
+    document.title = `${brand} Admin Login`;
+    const heading = document.querySelector(".login-card h1");
+    if (heading) heading.textContent = `${brand} Admin`;
+  } catch {
+    // ignore branding load issues on login
+  }
+
   if (await getAdminSession()) {
     sessionStorage.setItem(AUTH_KEY, "ok");
     window.location.href = "admin-dashboard.html";
@@ -150,6 +160,9 @@ async function bootstrapDashboardPage() {
 
   const data = await loadData();
   applyThemeSettings(data.settings);
+  const adminTitleEl = document.getElementById("admin-panel-title");
+  document.title = `${data.settings?.brandName || "TOP SEAL"} Admin Panel`;
+  if (adminTitleEl) adminTitleEl.textContent = `${data.settings?.brandName || "TOP SEAL"} Admin Panel`;
 
   const settingsForm = document.getElementById("settings-form");
   const settingsNotice = document.getElementById("settings-notice");
@@ -186,6 +199,8 @@ async function bootstrapDashboardPage() {
   const entryPopupPreview = document.getElementById("entry-popup-preview");
   const broadcastEnabledInput = document.getElementById("broadcast-enabled");
   const broadcastFlowInput = document.getElementById("broadcast-flow");
+  const glowThreadsEnabledInput = document.getElementById("glow-threads-enabled");
+  const floatingWhatsappEnabledInput = document.getElementById("floating-whatsapp-enabled");
   const broadcastTextInput = document.getElementById("broadcast-text");
   const broadcastSpeedInput = document.getElementById("broadcast-speed");
 
@@ -204,6 +219,25 @@ async function bootstrapDashboardPage() {
   const homeSlideFile = document.getElementById("home-slide-file");
   const homeSlideNotice = document.getElementById("home-slide-notice");
   const homeSlidesList = document.getElementById("home-slides-list");
+
+  const displayItemForm = document.getElementById("display-item-form");
+  const displayItemTitleInput = document.getElementById("display-item-title");
+  const displayItemDescriptionInput = document.getElementById("display-item-description");
+  const displayItemLinkInput = document.getElementById("display-item-link");
+  const displayItemFileInput = document.getElementById("display-item-file");
+  const displayItemImageDataInput = document.getElementById("display-item-image-data");
+  const displayItemPreview = document.getElementById("display-item-preview");
+  const displayItemNotice = document.getElementById("display-item-notice");
+  const displayItemsList = document.getElementById("display-items-list");
+
+  const sideAdForm = document.getElementById("side-ad-form");
+  const sideAdSideInput = document.getElementById("side-ad-side");
+  const sideAdLinkInput = document.getElementById("side-ad-link");
+  const sideAdFileInput = document.getElementById("side-ad-file");
+  const sideAdImageDataInput = document.getElementById("side-ad-image-data");
+  const sideAdPreview = document.getElementById("side-ad-preview");
+  const sideAdNotice = document.getElementById("side-ad-notice");
+  const sideAdsList = document.getElementById("side-ads-list");
 
   const productForm = document.getElementById("product-form");
   const productNotice = document.getElementById("product-notice");
@@ -226,6 +260,9 @@ async function bootstrapDashboardPage() {
   const badgeBestSellerInput = document.getElementById("badge-best-seller");
   const productsBody = document.getElementById("products-body");
   const cancelEditBtn = document.getElementById("cancel-edit");
+  const analyticsKpiGrid = document.getElementById("analytics-kpi-grid");
+  const analyticsTopProducts = document.getElementById("analytics-top-products");
+  const analyticsTopSearches = document.getElementById("analytics-top-searches");
 
   function setProductPreview(imageData) {
     if (!imageData) {
@@ -248,6 +285,7 @@ async function bootstrapDashboardPage() {
   }
 
   function setSimplePreview(el, imageData) {
+    if (!el) return;
     if (!imageData) {
       el.removeAttribute("src");
       el.classList.add("hidden");
@@ -255,6 +293,14 @@ async function bootstrapDashboardPage() {
     }
     el.src = imageData;
     el.classList.remove("hidden");
+  }
+
+  function setDisplayPreview(imageData) {
+    setSimplePreview(displayItemPreview, imageData);
+  }
+
+  function setSideAdPreview(imageData) {
+    setSimplePreview(sideAdPreview, imageData);
   }
 
   function getSelectedBadges() {
@@ -352,6 +398,45 @@ async function bootstrapDashboardPage() {
     }
   });
 
+  displayItemFileInput?.addEventListener("change", async () => {
+    const file = displayItemFileInput.files?.[0];
+    if (!file) return;
+
+    try {
+      let finalImage = "";
+      try {
+        finalImage = await uploadImageToStorage(file);
+      } catch {
+        finalImage = await readFileAsDataUrl(file);
+      }
+      displayItemImageDataInput.value = finalImage;
+      setDisplayPreview(finalImage);
+      setNotice(displayItemNotice, "Display image uploaded.");
+    } catch (error) {
+      setNotice(displayItemNotice, error.message, "error");
+    }
+  });
+
+  sideAdFileInput?.addEventListener("change", async () => {
+    const file = sideAdFileInput.files?.[0];
+    if (!file) return;
+
+    try {
+      let finalImage = "";
+      const isGif = file.type === "image/gif" || /\.gif$/i.test(file.name || "");
+      try {
+        finalImage = await uploadImageToStorage(file);
+      } catch {
+        finalImage = isGif ? await readFileAsDataUrl(file) : await autoCropImageToSquare(file);
+      }
+      sideAdImageDataInput.value = finalImage;
+      setSideAdPreview(finalImage);
+      setNotice(sideAdNotice, "Side ad image uploaded.");
+    } catch (error) {
+      setNotice(sideAdNotice, error.message, "error");
+    }
+  });
+
   productImageFileInput.addEventListener("change", async () => {
     const file = productImageFileInput.files?.[0];
     if (!file) return;
@@ -377,6 +462,36 @@ async function bootstrapDashboardPage() {
       const li = document.createElement("li");
       li.innerHTML = `<strong>${cat.label}</strong>`;
 
+      const upBtn = document.createElement("button");
+      upBtn.textContent = "↑";
+      upBtn.className = "secondary icon-btn";
+      upBtn.type = "button";
+      upBtn.title = "Move up";
+      upBtn.disabled = data.categories.indexOf(cat) === 0;
+      upBtn.addEventListener("click", async () => {
+        const index = data.categories.indexOf(cat);
+        if (index <= 0) return;
+        [data.categories[index - 1], data.categories[index]] = [data.categories[index], data.categories[index - 1]];
+        await saveData(data);
+        redrawAll();
+        setNotice(categoryNotice, "Category order updated.");
+      });
+
+      const downBtn = document.createElement("button");
+      downBtn.textContent = "↓";
+      downBtn.className = "secondary icon-btn";
+      downBtn.type = "button";
+      downBtn.title = "Move down";
+      downBtn.disabled = data.categories.indexOf(cat) === data.categories.length - 1;
+      downBtn.addEventListener("click", async () => {
+        const index = data.categories.indexOf(cat);
+        if (index < 0 || index === data.categories.length - 1) return;
+        [data.categories[index], data.categories[index + 1]] = [data.categories[index + 1], data.categories[index]];
+        await saveData(data);
+        redrawAll();
+        setNotice(categoryNotice, "Category order updated.");
+      });
+
       const deleteBtn = document.createElement("button");
       deleteBtn.textContent = "Delete";
       deleteBtn.className = "danger";
@@ -392,7 +507,7 @@ async function bootstrapDashboardPage() {
 
       const actionWrap = document.createElement("div");
       actionWrap.className = "inline-actions";
-      actionWrap.appendChild(deleteBtn);
+      actionWrap.append(upBtn, downBtn, deleteBtn);
       li.appendChild(actionWrap);
       categoriesList.appendChild(li);
     });
@@ -444,6 +559,153 @@ async function bootstrapDashboardPage() {
       card.appendChild(btn);
       homeSlidesList.appendChild(card);
     });
+  }
+
+  function redrawDisplayItems() {
+    if (!displayItemsList) return;
+    displayItemsList.innerHTML = "";
+
+    (data.homeDisplayItems || []).forEach((item, idx) => {
+      const card = document.createElement("article");
+      card.className = "display-item-card";
+
+      const thumb = item.imageData
+        ? `<img class="slide-thumb" src="${item.imageData}" alt="${item.title || `Display item ${idx + 1}`}" />`
+        : '<div class="slide-thumb display-thumb-placeholder">No image</div>';
+
+      card.innerHTML = `${thumb}<div><strong>${item.title || "Untitled"}</strong><p class="small muted">${item.description || "No description"}</p><p class="small muted">${item.link || "No image link"}</p></div>`;
+
+      const actions = document.createElement("div");
+      actions.className = "inline-actions";
+
+      const upBtn = document.createElement("button");
+      upBtn.type = "button";
+      upBtn.className = "secondary icon-btn";
+      upBtn.textContent = "↑";
+      upBtn.title = "Move up";
+      upBtn.disabled = idx === 0;
+      upBtn.addEventListener("click", async () => {
+        if (idx === 0) return;
+        [data.homeDisplayItems[idx - 1], data.homeDisplayItems[idx]] = [data.homeDisplayItems[idx], data.homeDisplayItems[idx - 1]];
+        await saveData(data);
+        redrawDisplayItems();
+      });
+
+      const downBtn = document.createElement("button");
+      downBtn.type = "button";
+      downBtn.className = "secondary icon-btn";
+      downBtn.textContent = "↓";
+      downBtn.title = "Move down";
+      downBtn.disabled = idx === data.homeDisplayItems.length - 1;
+      downBtn.addEventListener("click", async () => {
+        if (idx === data.homeDisplayItems.length - 1) return;
+        [data.homeDisplayItems[idx], data.homeDisplayItems[idx + 1]] = [data.homeDisplayItems[idx + 1], data.homeDisplayItems[idx]];
+        await saveData(data);
+        redrawDisplayItems();
+      });
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "danger";
+      removeBtn.textContent = "Remove";
+      removeBtn.addEventListener("click", async () => {
+        data.homeDisplayItems.splice(idx, 1);
+        await saveData(data);
+        redrawDisplayItems();
+        setNotice(displayItemNotice, "Display item removed.");
+      });
+
+      actions.append(upBtn, downBtn, removeBtn);
+      card.appendChild(actions);
+      displayItemsList.appendChild(card);
+    });
+  }
+
+
+  function redrawSideAds() {
+    if (!sideAdsList) return;
+    sideAdsList.innerHTML = "";
+
+    const sideAds = data.settings.sideAds || [];
+    sideAds.forEach((ad, idx) => {
+      const card = document.createElement("article");
+      card.className = "display-item-card";
+
+      const sideLabel = ad.side === "right" ? "Right" : "Left";
+      card.innerHTML = `<img class="slide-thumb" src="${ad.imageData}" alt="${sideLabel} side ad" /><div><strong>${sideLabel} side</strong><p class="small muted">${ad.link || "No click link"}</p></div>`;
+
+      const actions = document.createElement("div");
+      actions.className = "inline-actions";
+
+      const upBtn = document.createElement("button");
+      upBtn.type = "button";
+      upBtn.className = "secondary icon-btn";
+      upBtn.textContent = "↑";
+      upBtn.disabled = idx === 0;
+      upBtn.addEventListener("click", async () => {
+        if (idx === 0) return;
+        [sideAds[idx - 1], sideAds[idx]] = [sideAds[idx], sideAds[idx - 1]];
+        await saveData(data);
+        redrawSideAds();
+      });
+
+      const downBtn = document.createElement("button");
+      downBtn.type = "button";
+      downBtn.className = "secondary icon-btn";
+      downBtn.textContent = "↓";
+      downBtn.disabled = idx === sideAds.length - 1;
+      downBtn.addEventListener("click", async () => {
+        if (idx === sideAds.length - 1) return;
+        [sideAds[idx], sideAds[idx + 1]] = [sideAds[idx + 1], sideAds[idx]];
+        await saveData(data);
+        redrawSideAds();
+      });
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "danger";
+      removeBtn.textContent = "Remove";
+      removeBtn.addEventListener("click", async () => {
+        sideAds.splice(idx, 1);
+        await saveData(data);
+        redrawSideAds();
+        setNotice(sideAdNotice, "Side ad removed.");
+      });
+
+      actions.append(upBtn, downBtn, removeBtn);
+      card.appendChild(actions);
+      sideAdsList.appendChild(card);
+    });
+  }
+
+  function redrawAnalyticsDashboard() {
+    if (!analyticsKpiGrid) return;
+    const analytics = getStoreAnalyticsSnapshot();
+    const totalViews = Object.values(analytics.pageViews || {}).reduce((sum, n) => sum + Number(n || 0), 0);
+    const whatsappClicks = Number(analytics.whatsappClicks || 0);
+    const leadCaptures = Number(analytics.leadCaptures || 0);
+    const conversion = totalViews ? ((leadCaptures + whatsappClicks) / totalViews) * 100 : 0;
+
+    const cards = [
+      { label: "Page Views", value: totalViews },
+      { label: "WhatsApp Clicks", value: whatsappClicks },
+      { label: "Leads Captured", value: leadCaptures },
+      { label: "Action Rate", value: `${conversion.toFixed(1)}%` }
+    ];
+
+    analyticsKpiGrid.innerHTML = cards.map((card) => `<article class="analytics-kpi"><div class="label">${card.label}</div><div class="value">${card.value}</div></article>`).join("");
+
+    const productEntries = Object.entries(analytics.productViews || {}).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const productMax = productEntries[0]?.[1] || 1;
+    analyticsTopProducts.innerHTML = productEntries.length
+      ? productEntries.map(([slug, count]) => `<div class="analytics-row"><div><strong>${slug}</strong><div class="bar"><span style="width:${Math.max(8, (count / productMax) * 100)}%"></span></div></div><span>${count}</span></div>`).join("")
+      : '<p class="small muted">No product analytics yet.</p>';
+
+    const searchEntries = Object.entries(analytics.topSearches || {}).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const searchMax = searchEntries[0]?.[1] || 1;
+    analyticsTopSearches.innerHTML = searchEntries.length
+      ? searchEntries.map(([term, count]) => `<div class="analytics-row"><div><strong>${term}</strong><div class="bar"><span style="width:${Math.max(8, (count / searchMax) * 100)}%"></span></div></div><span>${count}</span></div>`).join("")
+      : '<p class="small muted">No search analytics yet.</p>';
   }
 
   function redrawProductsTable() {
@@ -526,7 +788,10 @@ async function bootstrapDashboardPage() {
     renderCategoryOptions(data, productCategorySelect, true);
     renderSubcategoryOptions(data, productCategorySelect.value, productSubcategorySelect, true);
     redrawHomeSlides();
+    redrawDisplayItems();
+    redrawSideAds();
     redrawProductsTable();
+    redrawAnalyticsDashboard();
   }
 
   brandInput.value = data.settings.brandName;
@@ -556,8 +821,14 @@ async function bootstrapDashboardPage() {
   entryPopupStartInput.value = data.settings.entryPopupStartAt || "";
   entryPopupEndInput.value = data.settings.entryPopupEndAt || "";
   setSimplePreview(entryPopupPreview, data.settings.entryPopupImage || "");
+  data.homeDisplayItems = data.homeDisplayItems || [];
+  data.settings.sideAds = Array.isArray(data.settings.sideAds) ? data.settings.sideAds : [];
+  setDisplayPreview("");
+  setSideAdPreview("");
   broadcastEnabledInput.checked = !!data.settings.broadcastEnabled;
   broadcastFlowInput.checked = data.settings.broadcastFlow !== false;
+  glowThreadsEnabledInput.checked = data.settings.glowThreadsEnabled !== false;
+  floatingWhatsappEnabledInput.checked = data.settings.floatingWhatsappEnabled !== false;
   broadcastTextInput.value = data.settings.broadcastText || "";
   broadcastSpeedInput.value = Number(data.settings.broadcastSpeedSeconds) || 22;
 
@@ -590,10 +861,14 @@ async function bootstrapDashboardPage() {
     data.settings.entryPopupEndAt = entryPopupEndInput.value;
     data.settings.broadcastEnabled = !!broadcastEnabledInput.checked;
     data.settings.broadcastFlow = !!broadcastFlowInput.checked;
+    data.settings.glowThreadsEnabled = !!glowThreadsEnabledInput.checked;
+    data.settings.floatingWhatsappEnabled = !!floatingWhatsappEnabledInput.checked;
     data.settings.broadcastText = broadcastTextInput.value.trim();
     data.settings.broadcastSpeedSeconds = Math.min(80, Math.max(8, Number(broadcastSpeedInput.value) || 22));
     await saveData(data);
     applyThemeSettings(data.settings);
+  document.title = `${data.settings?.brandName || "TOP SEAL"} Admin Panel`;
+  if (adminTitleEl) adminTitleEl.textContent = `${data.settings?.brandName || "TOP SEAL"} Admin Panel`;
     setNotice(settingsNotice, "Settings saved.");
   });
 
@@ -654,6 +929,67 @@ async function bootstrapDashboardPage() {
     homeSlideForm.reset();
     redrawHomeSlides();
     setNotice(homeSlideNotice, "Slide added.");
+  });
+
+
+  displayItemForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const title = displayItemTitleInput.value.trim();
+    const description = displayItemDescriptionInput.value.trim();
+    const imageData = displayItemImageDataInput.value.trim();
+    const link = displayItemLinkInput.value.trim();
+
+    if (!title || !imageData) {
+      setNotice(displayItemNotice, "Heading and image are required.", "error");
+      return;
+    }
+
+    data.homeDisplayItems = data.homeDisplayItems || [];
+    data.homeDisplayItems.push({
+      id: uid("display"),
+      title,
+      description,
+      imageData,
+      link
+    });
+
+    await saveData(data);
+    displayItemForm.reset();
+    displayItemImageDataInput.value = "";
+    setDisplayPreview("");
+    redrawDisplayItems();
+    setNotice(displayItemNotice, "Display item added.");
+  });
+
+
+  sideAdForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const side = sideAdSideInput.value === "right" ? "right" : "left";
+    const imageData = sideAdImageDataInput.value.trim();
+    const link = sideAdLinkInput.value.trim();
+
+    if (!imageData) {
+      setNotice(sideAdNotice, "Upload a GIF/image for the side ad.", "error");
+      return;
+    }
+
+    data.settings.sideAds = Array.isArray(data.settings.sideAds) ? data.settings.sideAds : [];
+    data.settings.sideAds.push({
+      id: uid("side-ad"),
+      side,
+      imageData,
+      link
+    });
+
+    await saveData(data);
+    sideAdForm.reset();
+    sideAdImageDataInput.value = "";
+    sideAdSideInput.value = side;
+    setSideAdPreview("");
+    redrawSideAds();
+    setNotice(sideAdNotice, "Side ad added.");
   });
 
   productNameInput.addEventListener("blur", () => {

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="TOP SEAL industrial supplies: spray paints, adhesives, hardware, sealants and automotive essentials." />
   <title>TOP SEAL | Categories</title>
   <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="assets/top-seal-favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
@@ -57,7 +58,23 @@
     </section>
 
 
+    <section id="home-display-section" class="home-display-section hidden"></section>
     <section id="category-featured-sections" class="category-featured-sections"></section>
+
+    <section id="lead-capture-section" class="lead-capture-section reveal-up">
+      <div class="lead-capture-copy">
+        <p class="lead-kicker">Quick Quote</p>
+        <h2>Need pricing for your next bulk order?</h2>
+        <p>Share your details and our team will contact you on WhatsApp with a custom offer.</p>
+      </div>
+      <form id="lead-capture-form" class="lead-capture-form">
+        <input id="lead-name" type="text" placeholder="Your name" required />
+        <input id="lead-phone" type="tel" placeholder="Phone / WhatsApp number" required />
+        <input id="lead-interest" type="text" placeholder="What products do you need?" />
+        <button type="submit">Get Quote on WhatsApp</button>
+      </form>
+      <p id="lead-capture-notice" class="small-note"></p>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -93,7 +110,12 @@
     applyStoreTheme(data.settings || {});
     setupBroadcastBar(data.settings || {});
     const popupReady = setupEntryPopup(data.settings || {});
+    setupSideAds(data.settings || {});
+    setupAmbientGlowThreads(data.settings || {});
+    setupFloatingWhatsApp(data.settings || {});
+    trackStoreEvent("page_view", { page: "index.html" });
     const brandName = data.settings?.brandName || "TOP SEAL";
+    document.title = `${brandName} | Home`;
     const whatsapp = data.settings?.whatsappNumber || "8801894527991";
     const heroEyebrow = data.settings?.heroEyebrow || "Trusted Industrial Supply Partner";
     const heroTitle = data.settings?.heroTitle || brandName;
@@ -109,6 +131,7 @@
     document.getElementById("footer-brand").textContent = brandName;
     document.getElementById("footer-whatsapp").href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello ${brandName}`)}`;
     document.getElementById("hero-secondary-cta").href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello ${brandName}`)}`;
+    bindTrackedWhatsAppClicks();
     document.getElementById("footer-address").textContent = data.settings?.contactAddress || "";
 
     const mapLinkEl = document.getElementById("footer-map-link");
@@ -291,6 +314,47 @@
 
     setupSlider(data.homeSlides || [], "home-slider", "home-slider-wrap");
 
+    const homeDisplaySection = document.getElementById("home-display-section");
+    const displayItems = (data.homeDisplayItems || []).filter((item) => item.imageData && item.title);
+    if (displayItems.length) {
+      homeDisplaySection.classList.remove("hidden");
+      const displayGrid = document.createElement("div");
+      displayGrid.className = "display-showcase-grid";
+      displayItems.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "display-showcase-card reveal-up";
+
+        const mediaHtml = item.link
+          ? `<a class="display-showcase-link" href="${item.link}" target="_blank" rel="noopener noreferrer"><img src="${optimizeImageSource(item.imageData, { width: 1800 })}" alt="${item.title || "Display image"}" class="display-showcase-image" loading="lazy" decoding="async" /></a>`
+          : `<img src="${optimizeImageSource(item.imageData, { width: 1800 })}" alt="${item.title || "Display image"}" class="display-showcase-image" loading="lazy" decoding="async" />`;
+
+        card.innerHTML = `
+          <h2 class="display-showcase-heading">${item.title || ""}</h2>
+          ${item.description ? `<p class="display-showcase-copy">${item.description}</p>` : ""}
+          ${mediaHtml}
+        `;
+        displayGrid.appendChild(card);
+      });
+
+      homeDisplaySection.append(displayGrid);
+    }
+
+    
+
+    const leadForm = document.getElementById("lead-capture-form");
+    const leadNotice = document.getElementById("lead-capture-notice");
+    leadForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const name = document.getElementById("lead-name").value.trim();
+      const phone = document.getElementById("lead-phone").value.trim();
+      const interest = document.getElementById("lead-interest").value.trim();
+      const message = `Hello ${brandName}, I want a quote. Name: ${name}, Phone: ${phone}${interest ? `, Requirement: ${interest}` : ""}`;
+      trackStoreEvent("lead_capture", { name, phone, interest });
+      window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`, "_blank", "noopener");
+      if (leadNotice) leadNotice.textContent = "Thanks! Opening WhatsApp quote chat...";
+      leadForm.reset();
+    });
+
     const categoryFeaturedSections = document.getElementById("category-featured-sections");
     const featuredProducts = (data.products || []).filter((p) => p.featuredOnHome);
     const featuredByCategory = new Map();
@@ -314,11 +378,7 @@
         const title = document.createElement("a");
         title.className = "category-featured-title";
         title.href = `category.html?cat=${category.slug}`;
-        title.textContent = category.label;
-
-        const note = document.createElement("p");
-        note.className = "section-note";
-        note.textContent = "Featured items";
+        title.innerHTML = `<span class="category-icon" aria-hidden="true"></span><span>${category.label}</span>`;
 
         const grid = document.createElement("div");
         grid.className = "products-grid";
@@ -330,14 +390,29 @@
             ? `<img src="${optimizeImageSource(product.imageData, { width: 520 })}" alt="${product.name}" class="product-card-image" loading="lazy" decoding="async" />`
             : `<div class="product-card-placeholder">No Image</div>`;
           const badges = getDisplayBadges(product);
-          const badgesHtml = badges.length
-            ? `<div class="product-badges">${badges.map((badge) => `<span class="product-badge">${badge}</span>`).join("")}</div>`
+          const badgeMeta = {
+            "new": { icon: "✦", cls: "is-new" },
+            "hot": { icon: "🔥", cls: "is-hot" },
+            "best seller": { icon: "⭐", cls: "is-best" },
+            "in stock": { icon: "●", cls: "is-stock" }
+          };
+          const overlayBadges = badges.filter((badge) => String(badge || "").toLowerCase() !== "in stock");
+          const hasInStock = badges.some((badge) => String(badge || "").toLowerCase() === "in stock");
+          const badgesHtml = overlayBadges.length
+            ? `<div class="product-badges overlay">${overlayBadges.map((badge) => {
+                const key = String(badge || "").toLowerCase();
+                const meta = badgeMeta[key] || { icon: "✦", cls: "is-default" };
+                return `<span class="product-badge ${meta.cls}"><span class="badge-icon" aria-hidden="true">${meta.icon}</span>${badge}</span>`;
+              }).join("")}</div>`
             : "";
-          card.innerHTML = `${image}<h3>${product.name}</h3>${badgesHtml}<p class="product-card-price">৳ ${product.price || "Ask Price"}</p><a class="order-button" href="product.html?item=${product.slug}">Order</a>`;
+          const inlineStockHtml = hasInStock
+            ? `<div class="product-badges inline-stock"><span class="product-badge is-stock"><span class="badge-icon" aria-hidden="true">●</span>In Stock</span></div>`
+            : "";
+          card.innerHTML = `<div class="product-media">${image}${badgesHtml}</div><h3>${product.name}</h3>${inlineStockHtml}<p class="product-card-price">৳ ${product.price || "Ask Price"}</p><a class="order-button" href="product.html?item=${product.slug}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="whatsapp-icon bi bi-whatsapp" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/></svg>Order</a>`;
           grid.appendChild(card);
         });
 
-        section.append(title, note, grid);
+        section.append(title, grid);
         categoryFeaturedSections.appendChild(section);
       });
     }
@@ -354,7 +429,6 @@
 
     const categoryDropdownMenu = document.getElementById("category-dropdown-menu");
     setupSubcategoryDropdown(data);
-    appendSubcategoriesIntoCategoryMenu(data);
     data.categories.forEach((cat) => {
       const item = document.createElement("a");
       item.href = `category.html?cat=${cat.slug}`;
@@ -379,6 +453,14 @@
         topNav.classList.remove("open");
       });
     });
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) entry.target.classList.add("is-visible");
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll(".reveal-up, .category-featured-block").forEach((el) => observer.observe(el));
+
     await popupReady;
     } finally {
       hidePageLoadingScreen();
