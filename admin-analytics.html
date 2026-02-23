@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOP SEAL Analytics Dashboard</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <header class="admin-header">
+    <div class="container row">
+      <div>
+        <h1 id="analytics-page-title">TOP SEAL Analytics Dashboard</h1>
+        <p class="small">Traffic, leads, and conversion insights.</p>
+      </div>
+      <div class="inline-actions">
+        <a class="button-like secondary" href="admin-dashboard.html">Back to Admin</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="admin-analytics-page" class="container">
+    <section class="card analytics-filters">
+      <div class="inline-actions">
+        <label><span class="small">Range</span><select id="analytics-range"><option value="7d">Last 7 Days</option><option value="30d" selected>Last 30 Days</option><option value="custom">Custom Range</option></select></label>
+        <label><span class="small">Start</span><input id="analytics-start" type="date" /></label>
+        <label><span class="small">End</span><input id="analytics-end" type="date" /></label>
+        <button id="analytics-apply" type="button">Apply Filter</button>
+      </div>
+      <div class="inline-actions">
+        <button id="analytics-export-csv" type="button" class="secondary">Export CSV</button>
+        <button id="analytics-export-pdf" type="button" class="secondary">Export PDF</button>
+      </div>
+    </section>
+    <section class="card analytics-overview-card">
+      <h2>Performance Snapshot</h2>
+      <div id="analytics-kpi-grid" class="analytics-kpi-grid"></div>
+    </section>
+
+    <section class="card chart-grid">
+      <article>
+        <h3>Page Views (Bar Chart)</h3>
+        <canvas id="page-views-chart" width="760" height="260" class="chart-canvas"></canvas>
+      </article>
+      <article>
+        <h3>Top Product Views (Line Chart)</h3>
+        <canvas id="product-views-chart" width="760" height="260" class="chart-canvas"></canvas>
+      </article>
+    </section>
+
+    <section class="card chart-grid">
+      <article>
+        <h3>Traffic Source Mix (Pie)</h3>
+        <div class="pie-wrap">
+          <div id="traffic-pie" class="traffic-pie"></div>
+          <div id="traffic-legend" class="analytics-list"></div>
+        </div>
+      </article>
+      <article>
+        <h3>Top Search Terms</h3>
+        <div id="analytics-top-searches" class="analytics-list"></div>
+      </article>
+    </section>
+
+    <section class="card">
+      <h3>Lead Hourly Heatmap (best time/day)</h3>
+      <div id="lead-heatmap" class="lead-heatmap"></div>
+    </section>
+  </main>
+
+  <script src="shop-data.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
