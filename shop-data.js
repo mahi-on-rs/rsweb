@@ -286,7 +286,20 @@ const TOPSEAL_DEFAULT_DATA = {
 };
 
 const IS_LOCAL_HOST = window.location.hostname.includes("localhost") || window.location.hostname === "127.0.0.1";
-const TOPSEAL_API_BASE = window.TOPSEAL_API_BASE || (IS_LOCAL_HOST ? "" : "https://api.vortexnodes.xyz");
+
+function inferApiBaseFromHost() {
+  const host = window.location.hostname;
+  if (host === "topseal-admin.onrender.com") return "https://topseal-api.onrender.com";
+  if (host.startsWith("admin.")) return `https://api.${host.slice(6)}`;
+  if (host.includes("onrender.com")) {
+    const fromPattern = host.replace("-admin.", "-api.");
+    if (fromPattern !== host) return `https://${fromPattern}`;
+  }
+  return "https://api.vortexnodes.xyz";
+}
+
+const persistedApiBase = localStorage.getItem("topseal_api_base") || "";
+const TOPSEAL_API_BASE = window.TOPSEAL_API_BASE || persistedApiBase || (IS_LOCAL_HOST ? "" : inferApiBaseFromHost());
 const LOCAL_ONLY_MODE = !TOPSEAL_API_BASE;
 let whatsappDelegateBound = false;
 

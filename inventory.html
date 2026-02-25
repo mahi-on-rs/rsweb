@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory Workspace</title>
+  <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="assets/top-seal-favicon.svg" />
+  <link rel="stylesheet" href="inventory.css" />
+</head>
+<body>
+  <div class="inventory-shell">
+    <aside class="inventory-sidebar">
+      <a class="inventory-brand" href="inventory.html">
+        <img id="inventory-brand-logo" src="assets/top-seal-mark.svg" alt="Brand logo" />
+        <div>
+          <p class="eyebrow">Inventory</p>
+          <h1 id="inventory-brand-name">TOP SEAL</h1>
+        </div>
+      </a>
+
+      <nav class="inventory-nav" id="inventory-nav" aria-label="Inventory modules">
+        <button class="inventory-nav-item active" data-module="dashboard" type="button">Dashboard</button>
+        <button class="inventory-nav-item" data-module="sales" type="button">Sales & Invoices</button>
+        <button class="inventory-nav-item" data-module="items" type="button">Items & Categories</button>
+        <button class="inventory-nav-item" data-module="stock" type="button">Stock & Godowns</button>
+        <button class="inventory-nav-item" data-module="customers" type="button">Customers</button>
+        <button class="inventory-nav-item" data-module="reports" type="button">Reports</button>
+      </nav>
+
+      <div class="inventory-sidebar-footer">
+        <p id="inventory-settings-source">Theme synced from admin settings.</p>
+        <a href="admin-dashboard.html" class="ghost-link">Back to Admin Panel</a>
+      </div>
+    </aside>
+
+    <main class="inventory-main">
+      <header class="inventory-header card">
+        <div>
+          <p class="eyebrow" id="inventory-module-eyebrow">Implementation starter</p>
+          <h2 id="inventory-module-title">Dashboard</h2>
+        </div>
+        <div class="header-actions">
+          <label class="search-wrap" for="inventory-global-search">
+            <span>Search</span>
+            <input id="inventory-global-search" type="search" placeholder="Items or customers" />
+          </label>
+          <label class="search-wrap" for="inventory-role-select">
+            <span>Role</span>
+            <select id="inventory-role-select">
+              <option value="owner">Owner</option>
+              <option value="manager">Manager</option>
+              <option value="sales">Sales</option>
+              <option value="storekeeper">Storekeeper</option>
+            </select>
+          </label>
+          <button id="inventory-new-sale" type="button">+ New Sale</button>
+        </div>
+      </header>
+
+      <section class="inventory-kpis">
+        <article class="card kpi-card">
+          <p>Today Sales</p>
+          <h3 id="kpi-sales">0.00</h3>
+        </article>
+        <article class="card kpi-card">
+          <p>Invoices (30d)</p>
+          <h3 id="kpi-invoices">0</h3>
+        </article>
+        <article class="card kpi-card">
+          <p>Total Customers</p>
+          <h3 id="kpi-customers">0</h3>
+        </article>
+        <article class="card kpi-card">
+          <p>Low Stock Items</p>
+          <h3 id="kpi-stock">0</h3>
+        </article>
+      </section>
+
+      <section class="card" id="inventory-module-summary">
+        <h3 id="module-focus-title">What this module will include</h3>
+        <ul id="module-focus-list" class="bullet-list"></ul>
+      </section>
+
+      <section class="card" id="inventory-module-workspace"></section>
+
+      <section class="card">
+        <h3>Implementation notes</h3>
+        <p id="inventory-module-note" class="module-note"></p>
+      </section>
+    </main>
+  </div>
+
+  <script src="shop-data.js"></script>
+  <script src="inventory.js"></script>
+</body>
+</html>
