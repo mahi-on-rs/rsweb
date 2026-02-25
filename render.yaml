@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: topseal-api
+    env: node
+    rootDir: api
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+  - type: static
+    name: topseal-frontend
+    buildCommand: ""
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /admin
+        destination: /admin-dashboard.html
+      - type: rewrite
+        source: /inventory
+        destination: /inventory.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
