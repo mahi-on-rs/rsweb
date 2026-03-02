@@ -3,7 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Browse TOP SEAL product categories and industrial supply items." />
+  <meta name="description" content="Browse TOP SEAL shop categories, compare products, and request fast WhatsApp quotes for industrial supplies." />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <link rel="canonical" id="canonical-link" href="https://topseal.shop/category.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TOP SEAL" />
+  <meta property="og:title" id="og-title" content="TOP SEAL Shop Categories" />
+  <meta property="og:description" id="og-description" content="Browse TOP SEAL shop categories and discover industrial supply products." />
+  <meta property="og:url" id="og-url" content="https://topseal.shop/category.html" />
+  <meta property="og:image" id="og-image" content="assets/top-seal-mark.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" id="twitter-title" content="TOP SEAL Shop Categories" />
+  <meta name="twitter:description" id="twitter-description" content="Browse TOP SEAL shop categories and discover industrial supply products." />
+  <meta name="twitter:image" id="twitter-image" content="assets/top-seal-mark.svg" />
   <title>TOP SEAL | Category</title>
   <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="assets/top-seal-favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
@@ -181,6 +193,85 @@
     });
 
     const category = data.categories.find((cat) => cat.slug === catSlug);
+
+    const selectedSubcategory = category?.subcategories?.find((sub) => sub.slug === selectedSubSlugFromUrl);
+    const categoryLabel = category?.label || "Category";
+    const subcategoryLabel = selectedSubcategory?.label ? ` - ${selectedSubcategory.label}` : "";
+    const seoTitle = `${brandName} Shop | ${categoryLabel}${subcategoryLabel}`;
+    const seoDescription = selectedSubcategory?.label
+      ? `Shop ${selectedSubcategory.label} in ${categoryLabel} at ${brandName}. Compare product options and request fast WhatsApp quotes.`
+      : `Shop ${categoryLabel} products at ${brandName}. Explore sub-categories and request fast WhatsApp quotes.`;
+    const canonicalUrl = window.location.href;
+
+    document.title = seoTitle;
+    const descriptionMeta = document.querySelector('meta[name="description"]');
+    if (descriptionMeta) descriptionMeta.setAttribute("content", seoDescription);
+    const canonicalLink = document.getElementById("canonical-link");
+    if (canonicalLink) canonicalLink.setAttribute("href", canonicalUrl);
+
+    const ogImage = category?.heroImage || data.settings?.brandLogoImage || "assets/top-seal-mark.svg";
+    const setMetaContent = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute("content", value);
+    };
+    setMetaContent("og-title", seoTitle);
+    setMetaContent("og-description", seoDescription);
+    setMetaContent("og-url", canonicalUrl);
+    setMetaContent("og-image", ogImage);
+    setMetaContent("twitter-title", seoTitle);
+    setMetaContent("twitter-description", seoDescription);
+    setMetaContent("twitter-image", ogImage);
+
+    const breadcrumbData = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": `${window.location.origin}/index.html`
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": categoryLabel,
+          "item": `${window.location.origin}/category.html?cat=${encodeURIComponent(catSlug || "")}`
+        }
+      ]
+    };
+
+    if (selectedSubcategory?.label) {
+      breadcrumbData.itemListElement.push({
+        "@type": "ListItem",
+        "position": 3,
+        "name": selectedSubcategory.label,
+        "item": canonicalUrl
+      });
+    }
+
+    const categorySchema = {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": seoTitle,
+      "description": seoDescription,
+      "url": canonicalUrl,
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": brandName,
+        "url": `${window.location.origin}/index.html`
+      }
+    };
+
+    const previousSchemas = document.querySelectorAll('script[data-seo-schema="category-page"]');
+    previousSchemas.forEach((schema) => schema.remove());
+    [breadcrumbData, categorySchema].forEach((schemaPayload) => {
+      const script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.dataset.seoSchema = "category-page";
+      script.textContent = JSON.stringify(schemaPayload);
+      document.head.appendChild(script);
+    });
 
     const title = document.getElementById("category-title");
     const subcategoryList = document.getElementById("subcategory-list");
