@@ -286,7 +286,7 @@ const TOPSEAL_DEFAULT_DATA = {
 };
 
 const IS_LOCAL_HOST = window.location.hostname.includes("localhost") || window.location.hostname === "127.0.0.1";
-const TOPSEAL_API_BASE = window.TOPSEAL_API_BASE || (IS_LOCAL_HOST ? "" : "https://api.vortexnodes.xyz");
+const TOPSEAL_API_BASE = window.TOPSEAL_API_BASE || (IS_LOCAL_HOST ? "" : "https://api.topseal.xyz");
 const LOCAL_ONLY_MODE = !TOPSEAL_API_BASE;
 let whatsappDelegateBound = false;
 
