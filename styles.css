@@ -1472,6 +1472,107 @@ a:hover {
   gap: 0.68rem;
 }
 
+.product-recommend-block {
+  margin: 1.25rem 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.recommend-header h2 {
+  margin: 0 0 0.8rem;
+  font-size: 1.1rem;
+}
+
+.product-recommend-slider {
+  position: relative;
+}
+
+.mini-product-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(160px, 18vw);
+  gap: 0.7rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 0.2rem 2rem;
+  scrollbar-width: thin;
+}
+
+.mini-product-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface), #ffffff 6%);
+  padding: 0.55rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mini-product-image,
+.mini-product-placeholder {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.mini-product-image {
+  object-fit: cover;
+}
+
+.mini-product-placeholder {
+  display: grid;
+  place-items: center;
+  color: #7b8794;
+  background: #f8fbff;
+  font-size: 0.75rem;
+}
+
+.mini-product-card h3 {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.3;
+  min-height: 2.4em;
+}
+
+.mini-product-card p {
+  margin: 0;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.mini-product-link {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--primary), #ffffff 60%);
+  background: color-mix(in srgb, var(--primary), #ffffff 88%);
+  color: var(--primary);
+  font-weight: 700;
+  padding: 0.35rem 0.5rem;
+}
+
+.mini-slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  z-index: 2;
+}
+
+.mini-slider-prev { left: 0.2rem; }
+.mini-slider-next { right: 0.2rem; }
+
 .checkout-section {
   margin-top: 1.1rem;
   background: color-mix(in srgb, var(--surface), var(--primary) 4%);
@@ -1550,6 +1651,11 @@ a:hover {
   #product-image-wrap {
     justify-self: stretch;
     width: 100%;
+  }
+
+  .mini-product-track {
+    grid-auto-columns: minmax(150px, 60vw);
+    padding-inline: 1.8rem;
   }
 }
 

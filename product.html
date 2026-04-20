@@ -74,6 +74,20 @@
         <p class="small-note">A product card message will be ready in WhatsApp.</p>
       </div>
     </article>
+
+    <section class="product-recommend-block hidden" id="you-may-like-block">
+      <div class="recommend-header">
+        <h2>You May Also Like</h2>
+      </div>
+      <div class="product-recommend-slider" id="you-may-like-slider"></div>
+    </section>
+
+    <section class="product-recommend-block hidden" id="from-category-block">
+      <div class="recommend-header">
+        <h2>From This Category</h2>
+      </div>
+      <div class="product-recommend-slider" id="from-category-slider"></div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -208,6 +222,52 @@
     const productTrustPoints = document.getElementById("product-trust-points");
     const productImageWrap = document.getElementById("product-image-wrap");
     const buyButton = document.getElementById("buy-button");
+    const youMayLikeBlock = document.getElementById("you-may-like-block");
+    const youMayLikeSlider = document.getElementById("you-may-like-slider");
+    const fromCategoryBlock = document.getElementById("from-category-block");
+    const fromCategorySlider = document.getElementById("from-category-slider");
+
+    function createMiniCard(product) {
+      const card = document.createElement("article");
+      card.className = "mini-product-card";
+      const imageMarkup = product.imageData
+        ? `<img class="mini-product-image" src="${optimizeImageSource(product.imageData, { width: 420 })}" alt="${product.name}" loading="lazy" decoding="async" />`
+        : `<div class="mini-product-placeholder">No Image</div>`;
+      card.innerHTML = `
+        ${imageMarkup}
+        <h3>${product.name}</h3>
+        <p>৳ ${product.price || "Ask Price"}</p>
+        <a class="mini-product-link" href="product.html?item=${product.slug}">View</a>
+      `;
+      return card;
+    }
+
+    function mountProductScroller(container, items) {
+      container.innerHTML = "";
+      if (!items.length) return false;
+      const track = document.createElement("div");
+      track.className = "mini-product-track";
+      items.forEach((product) => track.appendChild(createMiniCard(product)));
+
+      const prev = document.createElement("button");
+      prev.type = "button";
+      prev.className = "mini-slider-arrow mini-slider-prev";
+      prev.setAttribute("aria-label", "Previous products");
+      prev.textContent = "‹";
+
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "mini-slider-arrow mini-slider-next";
+      next.setAttribute("aria-label", "Next products");
+      next.textContent = "›";
+
+      const scrollByAmount = () => Math.max(220, Math.floor(track.clientWidth * 0.85));
+      prev.addEventListener("click", () => track.scrollBy({ left: -scrollByAmount(), behavior: "smooth" }));
+      next.addEventListener("click", () => track.scrollBy({ left: scrollByAmount(), behavior: "smooth" }));
+
+      container.append(track, prev, next);
+      return true;
+    }
 
     if (!item) {
       productName.textContent = "Product not found";
@@ -217,6 +277,8 @@
       specsSection.classList.add("hidden");
       trustSection.classList.add("hidden");
       buyButton.style.display = "none";
+      youMayLikeBlock.classList.add("hidden");
+      fromCategoryBlock.classList.add("hidden");
     } else {
       const category = data.categories.find((cat) => cat.id === item.categoryId);
       productName.textContent = item.name;
@@ -282,6 +344,22 @@
       buyButton.href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(messageCard)}`;
       buyButton.target = "_blank";
       buyButton.rel = "noopener noreferrer";
+
+      const otherProducts = data.products.filter((product) => product.id !== item.id);
+      const youMayLike = otherProducts.slice(0, 12);
+      const fromCategory = otherProducts.filter((product) => product.categoryId === item.categoryId).slice(0, 12);
+
+      if (mountProductScroller(youMayLikeSlider, youMayLike)) {
+        youMayLikeBlock.classList.remove("hidden");
+      } else {
+        youMayLikeBlock.classList.add("hidden");
+      }
+
+      if (mountProductScroller(fromCategorySlider, fromCategory)) {
+        fromCategoryBlock.classList.remove("hidden");
+      } else {
+        fromCategoryBlock.classList.add("hidden");
+      }
     }
 
     setupTopNavSearch(data);
