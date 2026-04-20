@@ -168,7 +168,9 @@
       track.className = "smooth-slider-track";
 
       const deck = [images[images.length - 1], ...images, images[0]];
-      deck.forEach((src, idx) => {
+      deck.forEach((slide, idx) => {
+        const src = typeof slide === "string" ? slide : (slide?.imageData || "");
+        if (!src) return;
         const img = document.createElement("img");
         img.className = "smooth-slide-image";
         img.alt = `${altLabel} ${idx + 1}`;

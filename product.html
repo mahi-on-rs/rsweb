@@ -49,13 +49,9 @@
   </header>
 
   <main class="container">
-    <section id="product-slider-wrap" class="slider-wrap hidden">
-      <div class="slider" id="product-slider"></div>
-    </section>
-
     <article class="product-checkout" id="product-detail">
       <div id="product-image-wrap"></div>
-      <div>
+      <div class="product-checkout-content">
         <h2 id="product-name">Loading product...</h2>
         <div id="product-badges" class="product-badges"></div>
         <p id="product-price" class="checkout-price"></p>
@@ -198,117 +194,6 @@
       row.appendChild(a);
       footerSub.appendChild(row);
     });
-
-
-    function setupPageSlider(images, containerId, wrapId, altLabel) {
-      if (!images || !images.length) return;
-      const wrap = document.getElementById(wrapId);
-      const slider = document.getElementById(containerId);
-      wrap.classList.remove("hidden");
-      slider.innerHTML = "";
-
-      const intervalMs = Math.min(10000, Math.max(2000, Number(data.settings?.slideIntervalMs) || 3200));
-      const viewport = document.createElement("div");
-      viewport.className = "smooth-slider";
-      const track = document.createElement("div");
-      track.className = "smooth-slider-track";
-
-      const deck = [images[images.length - 1], ...images, images[0]];
-      deck.forEach((slide, idx) => {
-        const src = typeof slide === "string" ? slide : slide.imageData;
-        const link = typeof slide === "string" ? "" : (slide.link || "");
-        const img = document.createElement("img");
-        img.className = "smooth-slide-image";
-        img.alt = `${altLabel} ${idx + 1}`;
-        const v = buildImageVariantSet(src);
-        img.src = v.large;
-        img.srcset = `${v.small} 420w, ${v.medium} 820w, ${v.large} 1280w`;
-        img.sizes = "100vw";
-        img.decoding = "async";
-        if (link) img.dataset.slideLink = link;
-        track.appendChild(img);
-      });
-
-      viewport.appendChild(track);
-      slider.appendChild(viewport);
-
-      const prevBtn = document.createElement("button");
-      prevBtn.type = "button";
-      prevBtn.className = "slider-arrow slider-arrow-prev";
-      prevBtn.setAttribute("aria-label", "Previous slide");
-      prevBtn.textContent = "‹";
-      const nextBtn = document.createElement("button");
-      nextBtn.type = "button";
-      nextBtn.className = "slider-arrow slider-arrow-next";
-      nextBtn.setAttribute("aria-label", "Next slide");
-      nextBtn.textContent = "›";
-      slider.append(prevBtn, nextBtn);
-
-      const dots = document.createElement("div");
-      dots.className = "slider-dots";
-      images.forEach((_, i) => {
-        const dot = document.createElement("button");
-        dot.type = "button";
-        dot.className = "slider-dot" + (i === 0 ? " active" : "");
-        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
-        dot.addEventListener("click", () => goTo(i + 1));
-        dots.appendChild(dot);
-      });
-      slider.appendChild(dots);
-
-      let index = 1;
-      let timer = null;
-      let isAnimating = false;
-      function renderDots() {
-        dots.querySelectorAll(".slider-dot").forEach((dot, i) => dot.classList.toggle("active", i === (index - 1 + images.length) % images.length));
-      }
-      function move(animate = true) {
-        if (!animate) {
-          const previousTransition = track.style.transition;
-          track.style.transition = "none";
-          track.style.transform = `translate3d(-${index * 100}%, 0, 0)`;
-          void track.offsetWidth;
-          track.style.transition = previousTransition;
-        } else {
-          track.style.transform = `translate3d(-${index * 100}%, 0, 0)`;
-        }
-        renderDots();
-      }
-      function goTo(next) {
-        if (isAnimating) return;
-        isAnimating = true;
-        index = next;
-        move(true);
-      }
-
-      track.addEventListener("click", () => {
-        const activeSlide = track.children[index];
-        const link = activeSlide?.dataset?.slideLink || "";
-        if (link) window.open(link, "_blank", "noopener");
-      });
-      track.addEventListener("transitionend", () => {
-        isAnimating = false;
-        if (index === 0) {
-          index = images.length;
-          move(false);
-        } else if (index === images.length + 1) {
-          index = 1;
-          move(false);
-        }
-      });
-      function startAuto() { stopAuto(); timer = setInterval(() => goTo(index + 1), intervalMs); }
-      function stopAuto() { if (timer) clearInterval(timer); timer = null; }
-      prevBtn.addEventListener("click", () => goTo(index - 1));
-      nextBtn.addEventListener("click", () => goTo(index + 1));
-      slider.addEventListener("mouseenter", stopAuto);
-      slider.addEventListener("mouseleave", startAuto);
-      slider.addEventListener("focusin", stopAuto);
-      slider.addEventListener("focusout", startAuto);
-      move(false);
-      startAuto();
-    }
-
-    setupPageSlider(data.homeSlides || [], "product-slider", "product-slider-wrap", "Product page slideshow image");
 
     const productName = document.getElementById("product-name");
     const productPrice = document.getElementById("product-price");
