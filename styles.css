@@ -1966,22 +1966,28 @@ a:hover {
 }
 
 
-.reveal-up {
+.reveal-up,
+.category-featured-block {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-ready .reveal-up {
   opacity: 0;
   transform: translateY(28px);
   transition: opacity 620ms var(--ease-standard), transform 620ms var(--ease-standard);
+}
+
+.reveal-ready .category-featured-block {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 580ms var(--ease-standard), transform 580ms var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
 }
 
 .reveal-up.is-visible,
 .category-featured-block.is-visible {
   opacity: 1;
   transform: translateY(0);
-}
-
-.category-featured-block {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 580ms var(--ease-standard), transform 580ms var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
 }
 
 body::before,

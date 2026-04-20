@@ -469,12 +469,18 @@
       });
     });
     
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) entry.target.classList.add("is-visible");
-      });
-    }, { threshold: 0.12 });
-    document.querySelectorAll(".reveal-up, .category-featured-block").forEach((el) => observer.observe(el));
+    const revealTargets = document.querySelectorAll(".reveal-up, .category-featured-block");
+    if ("IntersectionObserver" in window) {
+      document.body.classList.add("reveal-ready");
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) entry.target.classList.add("is-visible");
+        });
+      }, { threshold: 0.12 });
+      revealTargets.forEach((el) => observer.observe(el));
+    } else {
+      revealTargets.forEach((el) => el.classList.add("is-visible"));
+    }
 
     await popupReady;
     } finally {
