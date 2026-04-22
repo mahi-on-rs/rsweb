@@ -1054,11 +1054,25 @@ async function bootstrapAnalyticsPage() {
   const exportCsvBtn = document.getElementById("analytics-export-csv");
   const exportPdfBtn = document.getElementById("analytics-export-pdf");
   const kpi = document.getElementById("analytics-kpi-grid");
+  const scopeNote = document.getElementById("analytics-scope-note");
   const topSearches = document.getElementById("analytics-top-searches");
   const trafficPie = document.getElementById("traffic-pie");
   const trafficLegend = document.getElementById("traffic-legend");
   const heatmapEl = document.getElementById("lead-heatmap");
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const pageLabelMap = {
+    "index.html": "Home",
+    "category.html": "Category",
+    "product.html": "Product Details",
+    "contact.html": "Contact"
+  };
+  function normalizePageLabel(page = "") {
+    const clean = String(page || "").split("#")[0].split("?")[0].trim().replace(/^\/+/, "");
+    if (!clean || clean === "/") return "Home";
+    const fileName = clean.split("/").pop() || clean;
+    if (pageLabelMap[fileName]) return pageLabelMap[fileName];
+    return fileName.replace(/\.html?$/i, "").replace(/[-_]+/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
+  }
   function getRangeBounds() {
     const now = new Date();
     const range = rangeSelect?.value || "30d";
@@ -1088,7 +1102,7 @@ async function bootstrapAnalyticsPage() {
     let leads = 0;
     scoped.forEach((event) => {
       if (event.type === "page_view") {
-        const key = event.page || "unknown";
+        const key = normalizePageLabel(event.page || "unknown");
         pageViewMap[key] = (pageViewMap[key] || 0) + 1;
       }
       if (event.type === "product_view") {
@@ -1106,9 +1120,14 @@ async function bootstrapAnalyticsPage() {
     const productViews = Object.entries(productMap).sort((a, b) => b[1] - a[1]);
     const searches = Object.entries(searchMap).sort((a, b) => b[1] - a[1]);
     if (!scoped.length) {
+      const normalizedPageViews = {};
+      Object.entries(analytics.pageViews || {}).forEach(([page, count]) => {
+        const key = normalizePageLabel(page);
+        normalizedPageViews[key] = (normalizedPageViews[key] || 0) + (Number(count) || 0);
+      });
       return {
         scoped,
-        pageViews: Object.entries(analytics.pageViews || {}).sort((a, b) => b[1] - a[1]),
+        pageViews: Object.entries(normalizedPageViews).sort((a, b) => b[1] - a[1]),
         productViews: Object.entries(analytics.productViews || {}).sort((a, b) => b[1] - a[1]),
         searches: Object.entries(analytics.topSearches || {}).sort((a, b) => b[1] - a[1]),
         wa: Number(analytics.whatsappClicks || 0),
@@ -1141,6 +1160,7 @@ async function bootstrapAnalyticsPage() {
   }
   function render() {
     const stats = buildFilteredStats();
+    const analyticsSnapshot = getStoreAnalyticsSnapshot();
     const pageViews = stats.pageViews;
     const productViews = stats.productViews.slice(0, 7);
     const searchEntries = stats.searches.slice(0, 8);
@@ -1152,6 +1172,10 @@ async function bootstrapAnalyticsPage() {
       ["Leads", stats.leads],
       ["Action Rate", `${actionRate}%`]
     ].map(([label, value]) => `<article class="analytics-kpi"><div class="label">${label}</div><div class="value">${value}</div></article>`).join("");
+    if (scopeNote) {
+      const updatedAt = analyticsSnapshot?.updatedAt ? new Date(analyticsSnapshot.updatedAt).toLocaleString() : "N/A";
+      scopeNote.textContent = `Data source: events tracked by this site's analytics script. Last update: ${updatedAt}.`;
+    }
     topSearches.innerHTML = searchEntries.length
       ? searchEntries.map(([term, count]) => `<div class="analytics-row"><div><strong>${term}</strong><div class="bar"><span style="width:${Math.max(8, Math.min(100, (count / (searchEntries[0][1] || 1)) * 100))}%"></span></div></div><span>${count}</span></div>`).join("")
       : '<p class="small muted">No search analytics yet in selected range.</p>';
