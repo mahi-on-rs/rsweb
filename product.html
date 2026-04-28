@@ -7,6 +7,24 @@
   <title>TOP SEAL | Product Details</title>
   <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="assets/top-seal-favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Meta Pixel Code -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '2153209772139400');
+    fbq('track', 'PageView');
+  </script>
+  <noscript>
+    <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2153209772139400&ev=PageView&noscript=1" alt="" />
+  </noscript>
+  <!-- End Meta Pixel Code -->
 </head>
 <body>
   <div id="page-loading-overlay" class="page-loading-overlay">
@@ -49,13 +67,9 @@
   </header>
 
   <main class="container">
-    <section id="product-slider-wrap" class="slider-wrap hidden">
-      <div class="slider" id="product-slider"></div>
-    </section>
-
     <article class="product-checkout" id="product-detail">
       <div id="product-image-wrap"></div>
-      <div>
+      <div class="product-checkout-content">
         <h2 id="product-name">Loading product...</h2>
         <div id="product-badges" class="product-badges"></div>
         <p id="product-price" class="checkout-price"></p>
@@ -78,6 +92,20 @@
         <p class="small-note">A product card message will be ready in WhatsApp.</p>
       </div>
     </article>
+
+    <section class="product-recommend-block hidden" id="you-may-like-block">
+      <div class="recommend-header">
+        <h2>You May Also Like</h2>
+      </div>
+      <div class="product-recommend-slider" id="you-may-like-slider"></div>
+    </section>
+
+    <section class="product-recommend-block hidden" id="from-category-block">
+      <div class="recommend-header">
+        <h2>From This Category</h2>
+      </div>
+      <div class="product-recommend-slider" id="from-category-slider"></div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -199,117 +227,6 @@
       footerSub.appendChild(row);
     });
 
-
-    function setupPageSlider(images, containerId, wrapId, altLabel) {
-      if (!images || !images.length) return;
-      const wrap = document.getElementById(wrapId);
-      const slider = document.getElementById(containerId);
-      wrap.classList.remove("hidden");
-      slider.innerHTML = "";
-
-      const intervalMs = Math.min(10000, Math.max(2000, Number(data.settings?.slideIntervalMs) || 3200));
-      const viewport = document.createElement("div");
-      viewport.className = "smooth-slider";
-      const track = document.createElement("div");
-      track.className = "smooth-slider-track";
-
-      const deck = [images[images.length - 1], ...images, images[0]];
-      deck.forEach((slide, idx) => {
-        const src = typeof slide === "string" ? slide : slide.imageData;
-        const link = typeof slide === "string" ? "" : (slide.link || "");
-        const img = document.createElement("img");
-        img.className = "smooth-slide-image";
-        img.alt = `${altLabel} ${idx + 1}`;
-        const v = buildImageVariantSet(src);
-        img.src = v.large;
-        img.srcset = `${v.small} 420w, ${v.medium} 820w, ${v.large} 1280w`;
-        img.sizes = "100vw";
-        img.decoding = "async";
-        if (link) img.dataset.slideLink = link;
-        track.appendChild(img);
-      });
-
-      viewport.appendChild(track);
-      slider.appendChild(viewport);
-
-      const prevBtn = document.createElement("button");
-      prevBtn.type = "button";
-      prevBtn.className = "slider-arrow slider-arrow-prev";
-      prevBtn.setAttribute("aria-label", "Previous slide");
-      prevBtn.textContent = "‹";
-      const nextBtn = document.createElement("button");
-      nextBtn.type = "button";
-      nextBtn.className = "slider-arrow slider-arrow-next";
-      nextBtn.setAttribute("aria-label", "Next slide");
-      nextBtn.textContent = "›";
-      slider.append(prevBtn, nextBtn);
-
-      const dots = document.createElement("div");
-      dots.className = "slider-dots";
-      images.forEach((_, i) => {
-        const dot = document.createElement("button");
-        dot.type = "button";
-        dot.className = "slider-dot" + (i === 0 ? " active" : "");
-        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
-        dot.addEventListener("click", () => goTo(i + 1));
-        dots.appendChild(dot);
-      });
-      slider.appendChild(dots);
-
-      let index = 1;
-      let timer = null;
-      let isAnimating = false;
-      function renderDots() {
-        dots.querySelectorAll(".slider-dot").forEach((dot, i) => dot.classList.toggle("active", i === (index - 1 + images.length) % images.length));
-      }
-      function move(animate = true) {
-        if (!animate) {
-          const previousTransition = track.style.transition;
-          track.style.transition = "none";
-          track.style.transform = `translate3d(-${index * 100}%, 0, 0)`;
-          void track.offsetWidth;
-          track.style.transition = previousTransition;
-        } else {
-          track.style.transform = `translate3d(-${index * 100}%, 0, 0)`;
-        }
-        renderDots();
-      }
-      function goTo(next) {
-        if (isAnimating) return;
-        isAnimating = true;
-        index = next;
-        move(true);
-      }
-
-      track.addEventListener("click", () => {
-        const activeSlide = track.children[index];
-        const link = activeSlide?.dataset?.slideLink || "";
-        if (link) window.open(link, "_blank", "noopener");
-      });
-      track.addEventListener("transitionend", () => {
-        isAnimating = false;
-        if (index === 0) {
-          index = images.length;
-          move(false);
-        } else if (index === images.length + 1) {
-          index = 1;
-          move(false);
-        }
-      });
-      function startAuto() { stopAuto(); timer = setInterval(() => goTo(index + 1), intervalMs); }
-      function stopAuto() { if (timer) clearInterval(timer); timer = null; }
-      prevBtn.addEventListener("click", () => goTo(index - 1));
-      nextBtn.addEventListener("click", () => goTo(index + 1));
-      slider.addEventListener("mouseenter", stopAuto);
-      slider.addEventListener("mouseleave", startAuto);
-      slider.addEventListener("focusin", stopAuto);
-      slider.addEventListener("focusout", startAuto);
-      move(false);
-      startAuto();
-    }
-
-    setupPageSlider(data.homeSlides || [], "product-slider", "product-slider-wrap", "Product page slideshow image");
-
     const productName = document.getElementById("product-name");
     const productPrice = document.getElementById("product-price");
     const productBadges = document.getElementById("product-badges");
@@ -323,6 +240,52 @@
     const productTrustPoints = document.getElementById("product-trust-points");
     const productImageWrap = document.getElementById("product-image-wrap");
     const buyButton = document.getElementById("buy-button");
+    const youMayLikeBlock = document.getElementById("you-may-like-block");
+    const youMayLikeSlider = document.getElementById("you-may-like-slider");
+    const fromCategoryBlock = document.getElementById("from-category-block");
+    const fromCategorySlider = document.getElementById("from-category-slider");
+
+    function createMiniCard(product) {
+      const card = document.createElement("article");
+      card.className = "mini-product-card";
+      const imageMarkup = product.imageData
+        ? `<img class="mini-product-image" src="${optimizeImageSource(product.imageData, { width: 420 })}" alt="${product.name}" loading="lazy" decoding="async" />`
+        : `<div class="mini-product-placeholder">No Image</div>`;
+      card.innerHTML = `
+        ${imageMarkup}
+        <h3>${product.name}</h3>
+        <p>৳ ${product.price || "Ask Price"}</p>
+        <a class="mini-product-link" href="product.html?item=${product.slug}">View</a>
+      `;
+      return card;
+    }
+
+    function mountProductScroller(container, items) {
+      container.innerHTML = "";
+      if (!items.length) return false;
+      const track = document.createElement("div");
+      track.className = "mini-product-track";
+      items.forEach((product) => track.appendChild(createMiniCard(product)));
+
+      const prev = document.createElement("button");
+      prev.type = "button";
+      prev.className = "mini-slider-arrow mini-slider-prev";
+      prev.setAttribute("aria-label", "Previous products");
+      prev.textContent = "‹";
+
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "mini-slider-arrow mini-slider-next";
+      next.setAttribute("aria-label", "Next products");
+      next.textContent = "›";
+
+      const scrollByAmount = () => Math.max(220, Math.floor(track.clientWidth * 0.85));
+      prev.addEventListener("click", () => track.scrollBy({ left: -scrollByAmount(), behavior: "smooth" }));
+      next.addEventListener("click", () => track.scrollBy({ left: scrollByAmount(), behavior: "smooth" }));
+
+      container.append(track, prev, next);
+      return true;
+    }
 
     if (!item) {
       productName.textContent = "Product not found";
@@ -332,6 +295,8 @@
       specsSection.classList.add("hidden");
       trustSection.classList.add("hidden");
       buyButton.style.display = "none";
+      youMayLikeBlock.classList.add("hidden");
+      fromCategoryBlock.classList.add("hidden");
     } else {
       const category = data.categories.find((cat) => cat.id === item.categoryId);
       productName.textContent = item.name;
@@ -397,6 +362,22 @@
       buyButton.href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(messageCard)}`;
       buyButton.target = "_blank";
       buyButton.rel = "noopener noreferrer";
+
+      const otherProducts = data.products.filter((product) => product.id !== item.id);
+      const youMayLike = otherProducts.slice(0, 12);
+      const fromCategory = otherProducts.filter((product) => product.categoryId === item.categoryId).slice(0, 12);
+
+      if (mountProductScroller(youMayLikeSlider, youMayLike)) {
+        youMayLikeBlock.classList.remove("hidden");
+      } else {
+        youMayLikeBlock.classList.add("hidden");
+      }
+
+      if (mountProductScroller(fromCategorySlider, fromCategory)) {
+        fromCategoryBlock.classList.remove("hidden");
+      } else {
+        fromCategoryBlock.classList.add("hidden");
+      }
     }
 
     setupTopNavSearch(data);
